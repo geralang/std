@@ -1,7 +1,9 @@
 
 mod std::io
 
+use std::internal
+
 pub proc println(line) {
     line |> as_str()
-        |> std::internal::io::println()
+        |> internal::io::println()
 }

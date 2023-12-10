@@ -130,3 +130,8 @@ pub proc clone(vector) {
         size = vector.size
     }
 }
+
+pub proc as_array(vector) {
+    return vector.content
+        |> arr::subarray_until(vector.size)
+}

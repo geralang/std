@@ -81,11 +81,11 @@ pub proc format(s, value) {
         }
         return #next unit
     })
-    return result.value |> opt::unwrap_or_else(|| panic(
-        "the format string '"
-            |> concat(s)
-            |> concat("' does not contain any underscores")
-    ))
+    return result.value |> opt::unwrap_or_else(||
+        "the format string '_' does not contain any underscores"
+            |> format(s)
+            |> panic()
+    )
 }
 
 pub proc split(s, separator) {

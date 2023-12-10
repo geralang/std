@@ -1,2 +1,23 @@
 
+proc std::internal::io::print(str) = gera_std_io_print
 proc std::internal::io::println(str) = gera_std_io_println
+proc std::io::inputln() -> str = gera_std_io_inputln
+
+proc std::io::file_sep() -> str = gera_std_io_file_sep
+proc std::io::path_sep() -> str = gera_std_io_path_sep
+
+proc std::internal::io::has_error() -> bool = gera_std_io_has_error
+proc std::internal::io::get_error() -> str = gera_std_io_get_error
+
+proc std::internal::io::file_exists(str) -> bool = gera_std_io_file_exists
+proc std::internal::io::canonicalize(str) -> str = gera_std_io_canonicalize
+
+proc std::internal::io::is_dir(str) -> bool = gera_std_io_is_dir
+proc std::internal::io::create_dir(str) = gera_std_io_create_dir
+proc std::internal::io::read_dir(str) -> [str] = gera_std_io_read_dir
+proc std::internal::io::delete_dir(str) = gera_std_io_delete_dir
+
+proc std::internal::io::is_file(str) -> bool = gera_std_io_is_file
+proc std::internal::io::write_file(str, str) = gera_std_io_write_file
+proc std::internal::io::read_file(str) -> str = gera_std_io_read_file
+proc std::internal::io::delete_file(str) = gera_std_io_delete_file
