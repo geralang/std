@@ -63,7 +63,7 @@ pub proc pad_right(s, target_length, padding) {
         |> concat(padding |> substring_until(fill_length % length(padding)))
 }
 
-pub proc format(s, value) {
+pub proc fmt(s, value) {
     mut var result = { value = #none unit }
     mut var i = 0
     exhaust(|| {
@@ -83,7 +83,7 @@ pub proc format(s, value) {
     })
     return result.value |> opt::unwrap_or_else(||
         "the format string '_' does not contain any underscores"
-            |> format(s)
+            |> fmt(s)
             |> panic()
     )
 }

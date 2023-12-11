@@ -61,8 +61,8 @@ pub proc insert(vector, index, item) {
     mut var idx = index
     case index < 0 -> idx = index + vector.size
     case idx > vector.size -> "the insertion index _ is out of bounds for a vector of length _"
-        |> str::format(idx)
-        |> str::format(vector.size)
+        |> str::fmt(idx)
+        |> str::fmt(vector.size)
         |> panic()
     idx..vector.size |> iter::for_each(|i| {
         vector.content[i + 1] = vector.content[i]
@@ -81,8 +81,8 @@ pub proc remove(vector, index) {
     mut var idx = index
     case index < 0 -> idx = index + vector.size
     case idx >= vector.size -> "the index _ is out of bounds for a vector of length _"
-        |> str::format(idx)
-        |> str::format(vector.size)
+        |> str::fmt(idx)
+        |> str::fmt(vector.size)
         |> panic()
     vector.size = vector.size - 1
     idx..vector.size |> iter::for_each(|i| {
@@ -95,8 +95,8 @@ pub proc get(vector, index) {
     mut var idx = index
     case index < 0 -> idx = index + vector.size
     case idx >= vector.size -> "the index _ is out of bounds for a vector of length _"
-        |> str::format(idx)
-        |> str::format(vector.size)
+        |> str::fmt(idx)
+        |> str::fmt(vector.size)
         |> panic()
     return vector.content[idx]
 }
@@ -105,8 +105,8 @@ pub proc set(vector, index, value) {
     mut var idx = index
     case index < 0 -> idx = index + vector.size
     case idx >= vector.size -> "the index _ is out of bounds for a vector of length _"
-        |> str::format(idx)
-        |> str::format(vector.size)
+        |> str::fmt(idx)
+        |> str::fmt(vector.size)
         |> panic()
     vector.content[idx] = value
     return vector

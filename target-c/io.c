@@ -17,17 +17,36 @@ void gera_std_io_println(GeraString line) {
 }
 
 GeraString gera_std_io_inputln() {
-    char* buffer = NULL;
-    size_t buffer_size = 0;
-    if(getline(&buffer, &buffer_size, stdin) == -1) {
-        gera___panic("Unable to read input!");
+    size_t buffer_size = 64;
+    char* buffer = (char*) malloc(buffer_size);
+    size_t i = 0;
+    if(buffer == NULL) { gera___panic("Unable to allocate memory!"); }
+    for(;;) {
+        int c = fgetc(stdin);
+        if(c == EOF) { break; }
+        if(c == '\r') { c = fgetc(stdin); }
+        if(c == '\n') { break; }
+        if(i >= buffer_size) {
+            buffer_size *= 2;
+            buffer = (char*) realloc(buffer, buffer_size);
+            if(buffer == NULL) { gera___panic("Unable to allocate memory!"); }
+        }
+        buffer[i] = c;
+        i += 1;
     }
-    GeraString line = gera___alloc_string(buffer);
-    // remove trailing new line
-    line.length -= 1;
-    line.length_bytes -= 1;
+    GeraAllocation* alloc = gera___rc_alloc(i, &gera___free_nothing);
+    memcpy(alloc->data, buffer, i);
     free(buffer);
-    return line;
+    size_t length = 0;
+    for(size_t o = 0; o < i; length += 1) {
+        o += gera___codepoint_size(alloc->data[o]);
+    }
+    return (GeraString) {
+        .allocation = alloc,
+        .data = alloc->data,
+        .length_bytes = i,
+        .length = length
+    };
 }
 
 
@@ -96,7 +115,7 @@ static void free_string_array(char* data, size_t size) {
         LPVOID dest_var; \
         FormatMessage( \
             FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, \
-            NULL, GetLastError(), 0, (LPWSTR) &dest_var, 0, NULL \
+            NULL, GetLastError(), 0, (LPSTR) &dest_var, 0, NULL \
         );
 
 
@@ -145,11 +164,7 @@ static void free_string_array(char* data, size_t size) {
         HAS_ERROR = 0;
         GERA_STRING_NULL_TERM(path, path_nt);
         DWORD attr = GetFileAttributesA(path_nt);
-        if(attr == INVALID_FILE_ATTRIBUTES) {
-            GET_CURRENT_ERROR(error_reason);
-            set_current_error(error_reason);
-            return 0;
-        }
+        if(attr == INVALID_FILE_ATTRIBUTES) { return 0; }
         return (attr & FILE_ATTRIBUTE_DIRECTORY) != 0;
     }
 
@@ -164,7 +179,11 @@ static void free_string_array(char* data, size_t size) {
 
     GeraArray gera_std_io_read_dir(GeraString path) {
         HAS_ERROR = 0;
-        GERA_STRING_NULL_TERM(path, path_nt);
+        gbool path_ends_with_sep = path.data[path.length_bytes - 1] == '\\';
+        size_t path_length = path.length_bytes + (path_ends_with_sep? 3 : 4);
+        char path_nt[path_length + 1];
+        memcpy(path_nt, path.data, path.length_bytes);
+        strcpy(path_nt + path.length_bytes, path_ends_with_sep? "*.*":"\\*.*");
         WIN32_FIND_DATAA entry;
         HANDLE dir = FindFirstFileA(path_nt, &entry);
         if(dir == INVALID_HANDLE_VALUE) {
@@ -198,7 +217,7 @@ static void free_string_array(char* data, size_t size) {
             if(strcmp(entry.cFileName, ".") == 0
                 || strcmp(entry.cFileName, "..") == 0) { continue; }
             if(item_idx >= item_count) { break; }
-            items[item_idx] = gera___alloc_string(entry->d_name);
+            items[item_idx] = gera___alloc_string(entry.cFileName);
             item_idx += 1;
         } while(FindNextFileA(dir, &entry) != 0);
         FindClose(dir);     
@@ -260,10 +279,7 @@ static void free_string_array(char* data, size_t size) {
         HAS_ERROR = 0;
         GERA_STRING_NULL_TERM(path, path_nt);
         struct stat st;
-        if(stat(path_nt, &st) == -1) {
-            set_current_error(strerror(errno));
-            return 0;
-        }
+        if(stat(path_nt, &st) == -1) { return 0; }
         return S_ISDIR(st.st_mode);
     }
 
@@ -339,10 +355,7 @@ static void free_string_array(char* data, size_t size) {
         HAS_ERROR = 0;
         GERA_STRING_NULL_TERM(path, path_nt);
         struct stat st;
-        if(stat(path_nt, &st) == -1) {
-            set_current_error(strerror(errno));
-            return 0;
-        }
+        if(stat(path_nt, &st) == -1) { return 0; }
         return S_ISREG(st.st_mode);
     }
 #endif

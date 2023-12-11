@@ -2,70 +2,70 @@
 mod std::io
 
 use core::*   // don't ask me why this is needed?
-use std::internal
+use std::internal::io::*
 
 pub proc print(thing) {
-    thing |> as_str() |> internal::io::print()
+    thing |> as_str() |> internal_print()
 }
 
 pub proc println(thing) {
-    thing |> as_str() |> internal::io::println()
+    thing |> as_str() |> internal_println()
 }
 
 
 proc get_error_or(value) {
-    case internal::io::has_error() -> return #err internal::io::get_error()
+    case internal_has_error() -> return #err internal_get_error()
     return #ok value
 }
 
 
 pub proc file_exists(path) {
-    return internal::io::file_exists(path)
+    return internal_file_exists(path)
 }
 
 pub proc canonicalize(path) {
-    var absolute = internal::io::canonicalize(path)
+    var absolute = internal_canonicalize(path)
     return get_error_or(absolute)
 }
 
 
 pub proc is_dir(path) {
-    var is = internal::io::is_dir(path)
+    var is = internal_is_dir(path)
     return get_error_or(is)
 }
 
 pub proc create_dir(path) {
-    internal::io::create_dir(path)
+    internal_create_dir(path)
     return get_error_or(unit)
 }
 
 pub proc read_dir(path) {
-    var files = internal::io::read_dir(path)
+    var files = internal_read_dir(path)
     return get_error_or(files)
 }
 
 pub proc delete_dir(path) {
-    internal::io::delete_dir(path)
+    internal_delete_dir(path)
     return get_error_or(unit)
 }
 
 
 pub proc is_file(path) {
-    var is = internal::io::is_file(path)
+    var is = internal_is_file(path)
     return get_error_or(is)
 }
 
 pub proc write_file(content, path) {
-    internal::io::write_file(content, path)
+    internal_write_file(content, path)
     return get_error_or(unit)
 }
 
 pub proc read_file(path) {
-    var content = internal::io::read_file(path)
+    var content = internal_read_file(path)
     return get_error_or(content)
 }
 
 pub proc delete_file(path) {
-    internal::io::delete_file(path)
+    internal_delete_file(path)
     return get_error_or(unit)
 }
