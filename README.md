@@ -58,34 +58,30 @@ cc $stdlib_c_c ./out/example.c -lm -o ./out/example
 ### Progress
 
 - [ ] target = any
-    - [x] Array utilities
-    - [x] Iterators
-    - [ ] Hash maps
-    - [ ] Hash sets
-    - [x] Math constants and simple functions
-    - [x] Utilities for optionals
-    - [x] String utilities
-    - [x] Vectors
-    - [ ] JSON
-    - [ ] RegEx
+    - [x] `std::arr` - Array utilities
+    - [x] `std::iter` - Iterators
+    - [ ] `std::map` - Hash maps
+    - [ ] `std::set` - Hash sets
+    - [x] `std::math` - Math constants and simple functions
+    - [x] `std::opt` - Utilities for optionals
+    - [ ] `std::res` - Utilities for results
+    - [x] `std::str` - String utilities
+    - [x] `std::vec` - Vectors
+    - [ ] `std::json` - JSON
+    - [ ] `std::regex` - RegEx
 - [ ] target = c
-    - [ ] Bitwise operations
-        - [ ] MISSING: unsigned left shift
-    - [x] Complex math functions
-    - [ ] I/O
-        - [x] Printing
-        - [ ] Files
-        - [ ] Console input
-    - [ ] Procedure for command line arguments
-    - [ ] Threads
-    - [ ] Time
-    - [ ] RNG
+    - [x] `std::bw` - Bitwise operations
+    - [x] `std::math` - Complex math functions
+    - [x] `std::io` - I/O
+    - [ ] `std::env` - Environment
+        - [ ] Environment variables
+        - [ ] Program arguments
+        - [ ] Running commands
+    - [ ] `std::thread` - Threads
+    - [ ] `std::time` - Time
+    - [ ] `std::rng` - Random number generation
 - [ ] target = js
-    - [x] Printing
-    - [x] Complex math functions
-    - [ ] Time
-    - [ ] RNG 
-
-### Using this is a pain
-
-In the future, I would like to provide a package manager that can abstract the pain of including the standard library away.
+    - [x] `std::io` - Printing
+    - [x] `std::math` - Complex math functions
+    - [ ] `std::time` - Time
+    - [ ] `std::rng` - Random number generation 
