@@ -1,0 +1,122 @@
+
+mod std::res
+
+use std::iter
+
+pub proc is_ok(result) {
+    case result {
+        #ok -> return true
+        #err -> return false
+    }
+}
+
+pub proc is_err(result) {
+    case result {
+        #ok -> return false
+        #err -> return true
+    }
+}
+
+pub proc get_ok(result) {
+    case result {
+        #ok o -> return #some o
+        #err -> return #none unit
+    }
+}
+
+pub proc get_err(result) {
+    case result {
+        #ok -> return #none unit
+        #err e -> return #some e
+    }
+}
+
+pub proc map(result, mapping) {
+    case result {
+        #ok o -> return #ok mapping(o)
+        #err e -> return #err e
+    }
+}
+
+pub proc map_err(result, mapping) {
+    case result {
+        #ok o -> return #ok o
+        #err e -> return #err mapping(e)
+    }
+}
+
+pub proc unwrap_or(result, default) {
+    case result {
+        #ok o -> return o
+        #err -> return default
+    }
+}
+
+pub proc unwrap_err_or(result, default) {
+    case result {
+        #ok -> return default
+        #err e -> return e
+    }
+}
+
+pub proc unwrap_or_else(result, f) {
+    case result {
+        #ok o -> return o
+        #err e -> return f(e)
+    }
+}
+
+pub proc unwrap_err_or_else(result, f) {
+    case result {
+        #ok o -> return f(o)
+        #err e -> return e
+    }
+}
+
+pub proc expect(result, reason) {
+    return result |> unwrap_or_else(|e| panic(reason))
+}
+
+pub proc expect_err(result, reason) {
+    return result |> unwrap_err_or_else(|o| panic(reason))
+}
+
+pub proc and(result, other) {
+    case result {
+        #ok -> return other
+        #err -> return result
+    }
+}
+
+pub proc and_then(result, f) {
+    case result {
+        #ok o -> return #ok f(o)
+        #err -> return result
+    }
+}
+
+pub proc or(result, other) {
+    case result {
+        #ok -> return other
+        #err -> return result
+    }
+}
+
+pub proc or_else(result, f) {
+    case result {
+        #ok -> return result
+        #err e -> return #err f(e) 
+    }
+}
+
+pub proc iter(result) {
+    return result
+        |> map(|o| iter::over_value(o))
+        |> unwrap_or_else(|e| iter::empty())
+}
+
+pub proc iter_err(result) {
+    return result
+        |> map_err(|e| iter::over_value(e))
+        |> unwrap_err_or_else(|o| iter::empty())
+}

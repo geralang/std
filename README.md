@@ -64,7 +64,7 @@ cc $stdlib_c_c ./out/example.c -lm -o ./out/example
     - [ ] `std::set` - Hash sets
     - [x] `std::math` - Math constants and simple functions
     - [x] `std::opt` - Utilities for optionals
-    - [ ] `std::res` - Utilities for results
+    - [x] `std::res` - Utilities for results
     - [x] `std::str` - String utilities
     - [x] `std::vec` - Vectors
     - [ ] `std::json` - JSON
