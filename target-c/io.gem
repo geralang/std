@@ -9,6 +9,8 @@ proc std::io::path_sep() -> str = gera_std_io_path_sep
 proc std::internal::io::internal_has_error() -> bool = gera_std_io_has_error
 proc std::internal::io::internal_get_error() -> str = gera_std_io_get_error
 
+proc std::internal::io::internal_set_cwd(str) = gera_std_io_set_cwd
+
 proc std::internal::io::internal_file_exists(str) -> bool = gera_std_io_file_exists
 proc std::internal::io::internal_canonicalize(str) -> str = gera_std_io_canonicalize
 

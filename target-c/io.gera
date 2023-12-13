@@ -19,6 +19,20 @@ proc get_error_or(value) {
 }
 
 
+pub proc set_cwd(path) {
+    internal_set_cwd(path)
+    return get_error_or(unit)
+}
+
+pub proc get_cwd() {
+    return "."
+        |> canonicalize()
+        |> unwrap_or_else(|e|
+            panic("Unable to get the current working directory!")
+        )
+}
+
+
 pub proc file_exists(path) {
     return internal_file_exists(path)
 }

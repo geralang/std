@@ -119,6 +119,16 @@ static void free_string_array(char* data, size_t size) {
         );
 
 
+    void gera_std_io_set_cwd(GeraString path) {
+        HAS_ERROR = 0;
+        GERA_STRING_NULL_TERM(path, path_nt);
+        if(!SetCurrentDirectoryA(path_nt)) {
+            GET_CURRENT_ERROR(error_reason);
+            set_current_error(error_reason);
+        }
+    }
+
+
     gbool gera_std_io_file_exists(GeraString path) {
         HAS_ERROR = 0;
         GERA_STRING_NULL_TERM(path, path_nt);
@@ -250,6 +260,15 @@ static void free_string_array(char* data, size_t size) {
     #include <sys/stat.h>
     #include <unistd.h>
     #include <dirent.h>
+
+
+    void gera_std_io_set_cwd(GeraString path) {
+        HAS_ERROR = 0;
+        GERA_STRING_NULL_TERM(path, path_nt);
+        if(chdir(path_nt) == -1) {
+            set_current_error(strerror(errno));
+        }
+    }
 
 
     gbool gera_std_io_file_exists(GeraString path) {

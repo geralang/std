@@ -73,10 +73,7 @@ cc $stdlib_c_c ./out/example.c -lm -o ./out/example
     - [x] `std::bw` - Bitwise operations
     - [x] `std::math` - Complex math functions
     - [x] `std::io` - I/O
-    - [ ] `std::env` - Environment
-        - [ ] Environment variables
-        - [ ] Program arguments
-        - [ ] Running commands
+    - [x] `std::env` - Environment
     - [ ] `std::thread` - Threads
     - [ ] `std::time` - Time
     - [ ] `std::rng` - Random number generation
