@@ -3,17 +3,24 @@
 #include <string.h>
 
 
-GeraArray gera_std_env_args() {
-    return GERA_ARGS;
-}
-
-
 static void free_string_array(char* data, size_t size) {
     GeraString* items = (GeraString*) data;
     size_t length = size / sizeof(GeraString);
     for(size_t i = 0; i < length; i += 1) {
         gera___rc_decr(items[i].allocation);
     }
+}
+
+
+GeraArray gera_std_env_args() {
+    size_t buffer_size = GERA_ARGS.length * sizeof(GeraString);
+    GeraAllocation* alloc = gera___rc_alloc(buffer_size, &free_string_array);
+    memcpy(alloc->data, GERA_ARGS.data, buffer_size);
+    return (GeraArray) {
+        .allocation = alloc,
+        .data = alloc->data,
+        .length = GERA_ARGS.length
+    };
 }
 
 

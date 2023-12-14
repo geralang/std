@@ -3,6 +3,7 @@ mod std::io
 
 use core::*   // don't ask me why this is needed?
 use std::internal::io::*
+use std::res
 
 pub proc print(thing) {
     thing |> as_str() |> internal_print()
@@ -27,7 +28,7 @@ pub proc set_cwd(path) {
 pub proc get_cwd() {
     return "."
         |> canonicalize()
-        |> unwrap_or_else(|e|
+        |> res::unwrap_or_else(|e|
             panic("Unable to get the current working directory!")
         )
 }
