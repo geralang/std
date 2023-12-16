@@ -65,29 +65,32 @@ pub proc pad_right(s, target_length, padding) {
         |> concat(padding |> substring_until(fill_length % length(padding)))
 }
 
-pub proc fmt(s, value) {
-    mut var result = { value = #none unit }
-    mut var i = 0
+pub proc fmt(s, v) {
+    var current = { ci = 0, vi = 0, rs = s }
     exhaust(|| {
-        case i >= length(s) -> return #end unit
-        var ci = i
-        i = i + 1
-        var c = s |> at(ci)
-        case c == "_" -> {
-            var r = s
+        case current.ci >= length(current.rs) -> return #end unit
+        case current.vi >= length(v) -> return #end unit
+        var ci = current.ci
+        case at(current.rs, ci) == "_" -> {
+            var inserted = v[current.vi]
+            current.rs = current.rs
                 |> substring_until(ci)
-                |> concat(value |> as_str())
-                |> concat(s |> substring_after(ci + 1))
-            result.value = #some r
-            return #end unit
+                |> concat(inserted)
+                |> concat(current.rs |> substring_after(ci + 1))
+            current.ci = ci + length(inserted)
+            current.vi = current.vi + 1
+        } else {
+            current.ci = ci + 1
         }
         return #next unit
     })
-    return result.value |> opt::unwrap_or_else(||
-        "the format string '_' does not contain any underscores"
-            |> fmt(s)
+    case current.vi < length(v) -> {
+        "the format string '_' does not \
+contain enough underscores for _ value(s)"
+            |> fmt([s, v |> length() |> as_str()])
             |> panic()
-    )
+    }
+    return current.rs
 }
 
 pub proc split(s, separator) {

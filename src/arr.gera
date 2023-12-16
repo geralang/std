@@ -12,10 +12,13 @@ pub proc subarray(a, start, end) {
     mut var end_index = end
     case end < 0 -> end_index = length(a) + end
     case start_index > end_index -> {
-        "the start index _ is larger than the end index _ (length of array is _)"
-            |> str::fmt(start_index)
-            |> str::fmt(end_index)
-            |> str::fmt(a |> length())
+        "the start index _ is larger than \
+the end index _ (length of array is _)"
+            |> str::fmt([
+                start_index |> as_str(),
+                end_index |> as_str(),
+                a |> length() |> as_str()
+            ])
             |> panic()
     }
     case start_index == end_index -> return []
