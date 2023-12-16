@@ -1,8 +1,0 @@
-
-mod prc
-
-use std::internal::prc::*
-
-pub proc exit(code) {
-    internal_exit(code)
-}
