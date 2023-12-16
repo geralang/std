@@ -1,16 +1,6 @@
-name = "gerastd_c"
+name = "gerastd"
 description = "The standard library for the Gera programming language."
 authors = ["TypeSafeSchwalbe"]
 version = "0.1"
-target = "c"
-dependencies = [
-    <https://github.com/typesafeschwalbe/gerastd>
-]
-
-build = "cc -O3 -c src-c/bitwise.c src-c/env.c src-c/io.c src-c/prc.c"
-link = [
-    "bitwise.o"
-    "env.o"
-    "io.o"
-    "prc.o"
-]
+target = "any"
+dependencies = []
