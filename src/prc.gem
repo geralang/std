@@ -1,2 +1,0 @@
-
-proc std::internal::prc::internal_exit(int) = gera_std_prc_exit
