@@ -1,0 +1,86 @@
+
+mod std::io
+
+use core::*   // don't ask me why this is needed?
+use std::internal::io::*
+use std::res
+
+pub proc print(thing) {
+    thing |> as_str() |> internal_print()
+}
+
+pub proc println(thing) {
+    thing |> as_str() |> internal_println()
+}
+
+
+proc get_error_or(value) {
+    case internal_has_error() -> return #err internal_get_error()
+    return #ok value
+}
+
+
+pub proc set_cwd(path) {
+    internal_set_cwd(path)
+    return get_error_or(unit)
+}
+
+pub proc get_cwd() {
+    return "."
+        |> canonicalize()
+        |> res::unwrap_or_else(|e|
+            panic("Unable to get the current working directory!")
+        )
+}
+
+
+pub proc file_exists(path) {
+    return internal_file_exists(path)
+}
+
+pub proc canonicalize(path) {
+    var absolute = internal_canonicalize(path)
+    return get_error_or(absolute)
+}
+
+
+pub proc is_dir(path) {
+    var is = internal_is_dir(path)
+    return get_error_or(is)
+}
+
+pub proc create_dir(path) {
+    internal_create_dir(path)
+    return get_error_or(unit)
+}
+
+pub proc read_dir(path) {
+    var files = internal_read_dir(path)
+    return get_error_or(files)
+}
+
+pub proc delete_dir(path) {
+    internal_delete_dir(path)
+    return get_error_or(unit)
+}
+
+
+pub proc is_file(path) {
+    var is = internal_is_file(path)
+    return get_error_or(is)
+}
+
+pub proc write_file(content, path) {
+    internal_write_file(content, path)
+    return get_error_or(unit)
+}
+
+pub proc read_file(path) {
+    var content = internal_read_file(path)
+    return get_error_or(content)
+}
+
+pub proc delete_file(path) {
+    internal_delete_file(path)
+    return get_error_or(unit)
+}
