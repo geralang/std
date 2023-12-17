@@ -92,12 +92,12 @@ proc set_h(m, h, key, value) {
     return m
 }
 
-pub proc get(m, key) {
+pub proc at(m, key) {
     var h = key |> m.hasher()
-    return m |> get_h(h)
+    return m |> at_h(h)
 }
 
-proc get_h(m, h) {
+proc at_h(m, h) {
     mut var bucket_idx = h % length(m.buckets)
     case bucket_idx < 0 -> bucket_idx = length(m.buckets) + bucket_idx
     return m.buckets[bucket_idx]

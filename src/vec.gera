@@ -91,7 +91,7 @@ out of bounds for a vector of length _"
     return vector
 }
 
-pub proc get(vector, index) {
+pub proc at(vector, index) {
     mut var idx = index
     case index < 0 -> idx = index + vector.size
     case idx >= vector.size -> "the index _ is \
