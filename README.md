@@ -4,8 +4,6 @@ This is the repository for the standard library of the Gera programming language
 
 - [Gera language website](https://geralang.netlify.app)
 - [Gera compiler repository](https://github.com/typesafeschwalbe/gerac)
-- [Gera stdlib repository (C)](https://github.com/typesafeschwalbe/gerastd-c)
-- [Gera stdlib repository (Javascript)](https://github.com/typesafeschwalbe/gerastd-js)
 
 ### Progress
 
@@ -20,3 +18,11 @@ This is the repository for the standard library of the Gera programming language
 - [x] `std::vec` - Vectors
 - [ ] `std::json` - JSON
 - [ ] `std::regex` - RegEx
+- [x] `std::bw` - Bitwise operations
+- [x] `std::math` - Complex math functions
+- [x] `std::io` - I/O
+- [x] `std::env` - Environment
+- [ ] `std::time` - Time
+- [ ] `std::rng` - Random number generation
+- [ ] `std::prc` - Child processes
+- [ ] `std::thread` - Threads

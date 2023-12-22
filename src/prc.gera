@@ -1,0 +1,10 @@
+
+mod prc
+
+use std::internal::prc::*
+
+target c {
+    pub proc exit(code) {
+        internal_exit(code)
+    }
+}
