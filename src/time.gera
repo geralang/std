@@ -45,7 +45,7 @@ pub proc as_seconds(timestamp) {
 }
 
 pub proc years(y) {
-    var leap_years = y / 4 //- y / 100 + y / 400
+    var leap_years = (y + 1) / 4
     return days(y * 365 + leap_years)
 }
 pub proc months(m) {
@@ -72,8 +72,8 @@ pub proc seconds(s) {
     return s * 1000
 }
 
-pub proc is_leap_year(year_ad) {
-    return year_ad % 4 == 0 && (year_ad % 100 != 0 || year_ad % 400 == 0)
+pub proc is_leap_year(year) {
+    return (year + 1) % 4 == 0
 }
 
 pub proc as_month_of_year(timestamp) {
@@ -103,6 +103,7 @@ pub proc as_day_of_month(timestamp) {
         }, days)
 }
 pub proc as_day_of_week(timestamp) {
+    // January 1st, 1 AD was a Monday :)
     return as_days(timestamp) % 7
 }
 pub proc as_hour_of_day(timestamp) {
