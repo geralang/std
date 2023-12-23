@@ -12,12 +12,12 @@ pub proc now_local() {
     return internal_local_unix_millis()
 }
 
-pub proc as_utc(timestamp) {
+pub proc as_utc(local_tz_timestamp) {
     return timestamp
         - (internal_local_unix_millis() - internal_utc_unix_millis())
 }
 
-pub proc as_local(timestamp) {
+pub proc as_local(utc_tz_timestamp) {
     return timestamp
         + (internal_local_unix_millis() - internal_utc_unix_millis())
 }
@@ -40,8 +40,8 @@ pub proc as_ue_seconds(timestamp) {
     return timestamp / 1000
 }
 
-pub proc is_leap_year(year) {
-    return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+pub proc is_leap_year(year_ad) {
+    return year_ad % 4 == 0 && (year_ad % 100 != 0 || year_ad % 400 == 0)
 }
 
 pub proc as_month_of_year(timestamp) {
