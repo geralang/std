@@ -2,42 +2,74 @@
 mod std::time
 
 use std::internal::time::*
-use std::(opt, iter, arr, str)
+use std::(opt, iter, arr, str, math)
 
 pub proc now_utc() {
-    return internal_utc_unix_millis()
+    return internal_utc_unix_millis() + unix_epoch()
 }
 
 pub proc now_local() {
-    return internal_local_unix_millis()
+    return internal_local_unix_millis() + unix_epoch()
+}
+
+pub proc unix_epoch() {
+    return years(1969)
 }
 
 pub proc as_utc(local_tz_timestamp) {
-    return timestamp
+    return local_tz_timestamp
         - (internal_local_unix_millis() - internal_utc_unix_millis())
 }
 
 pub proc as_local(utc_tz_timestamp) {
-    return timestamp
+    return utc_tz_timestamp
         + (internal_local_unix_millis() - internal_utc_unix_millis())
 }
 
-pub proc as_ue_years(timestamp) {
-    var days = timestamp |> as_ue_days()
+pub proc as_years(timestamp) {
+    var days = timestamp |> as_days()
     var leap_years = days / 365 / 4
     return (days - leap_years) / 365 
 }
-pub proc as_ue_days(timestamp) {
+pub proc as_days(timestamp) {
     return timestamp / static 1000 * 60 * 60 * 24
 }
-pub proc as_ue_hours(timestamp) {
+pub proc as_hours(timestamp) {
     return timestamp / static 1000 * 60 * 60
 }
-pub proc as_ue_minutes(timestamp) {
+pub proc as_minutes(timestamp) {
     return timestamp / static 1000 * 60
 }
-pub proc as_ue_seconds(timestamp) {
+pub proc as_seconds(timestamp) {
     return timestamp / 1000
+}
+
+pub proc years(y) {
+    var leap_years = y / 4 //- y / 100 + y / 400
+    return days(y * 365 + leap_years)
+}
+pub proc months(m) {
+    var current_year = m / 12
+    var month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    case current_year |> is_leap_year() -> month_days[1] = 29
+    var current_year_days = 0..m % 12
+        |> iter::reduce(|s, m| s + month_days[m], 0)
+    return years(current_year) + days(current_year_days)
+}
+pub proc weeks(w) {
+    return w * static 1000 * 60 * 60 * 24 * 7
+}
+pub proc days(d) {
+    return d * static 1000 * 60 * 60 * 24
+}
+pub proc hours(h) {
+    return h * static 1000 * 60 * 60
+}
+pub proc minutes(m) {
+    return m * static 1000 * 60
+}
+pub proc seconds(s) {
+    return s * 1000
 }
 
 pub proc is_leap_year(year_ad) {
@@ -46,7 +78,7 @@ pub proc is_leap_year(year_ad) {
 
 pub proc as_month_of_year(timestamp) {
     var month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    case as_ue_years(timestamp) + 1970 |> is_leap_year() -> month_days[1] = 29
+    case as_years(timestamp) |> is_leap_year() -> month_days[1] = 29
     var days = as_day_of_year(timestamp)
     return 0..length(month_days)
         |> iter::find(|m|
@@ -55,13 +87,13 @@ pub proc as_month_of_year(timestamp) {
         |> opt::expect("'as_day_of_year' can't return a day that's larger")
 }
 pub proc as_day_of_year(timestamp) {
-    var passed_years = timestamp |> as_ue_years()
+    var passed_years = timestamp |> as_years()
     var passed_leap_years = passed_years / 4
-    return as_ue_days(timestamp) - (passed_years * 365 + passed_leap_years)
+    return as_days(timestamp) - (passed_years * 365 + passed_leap_years)
 }
 pub proc as_day_of_month(timestamp) {
     var month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    case as_ue_years(timestamp) + 1970 |> is_leap_year() -> month_days[1] = 29
+    case as_years(timestamp) |> is_leap_year() -> month_days[1] = 29
     var days = as_day_of_year(timestamp)
     return month_days
         |> arr::iter()
@@ -71,24 +103,26 @@ pub proc as_day_of_month(timestamp) {
         }, days)
 }
 pub proc as_day_of_week(timestamp) {
-    return as_ue_days(timestamp)
-        + 3 // 1st day of 1970 was a Thursday
+    return as_days(timestamp) % 7
 }
 pub proc as_hour_of_day(timestamp) {
-    return as_ue_hours(timestamp) % 24
+    return as_hours(timestamp) % 24
 }
 pub proc as_minute_of_hour(timestamp) {
-    return as_ue_minutes(timestamp) % 60
+    return as_minutes(timestamp) % 60
 }
 pub proc as_second_of_minute(timestamp) {
-    return as_ue_seconds(timestamp) % 60
+    return as_seconds(timestamp) % 60
 }
 pub proc as_milli_of_second(timestamp) {
     return timestamp % 1000
 }
 
 pub proc display_month(month) {
-    case (month % 12) + 1 {
+    var m
+    case month < 0 -> m = month + (math::abs(month) / 12 + 1) * 12
+    else m = month
+    case (m % 12) + 1 {
         1 -> return "January"
         2 -> return "February"
         3 -> return "March"
@@ -106,7 +140,10 @@ pub proc display_month(month) {
 }
 
 pub proc display_weekday(day) {
-    case (day % 7) + 1 {
+    var d
+    case day < 0 -> d = day + (math::abs(day) / 7 + 1) * 7
+    else d = day
+    case (d % 7) + 1 {
         1 -> return "Monday"
         2 -> return "Tuesday"
         3 -> return "Wednesday"
@@ -129,7 +166,7 @@ pub proc display_day(day) {
     return (day + 1) |> as_str() |> concat(ending)
 }
 
-pub proc fmt(timestamp, pattern) {
+pub proc format_date(timestamp, pattern) {
     return pattern
         |> str::split("{day}") |> str::join(
             timestamp |> as_day_of_month() |> display_day()
@@ -161,7 +198,7 @@ pub proc fmt(timestamp, pattern) {
                 |> str::pad_left(2, "0")
         )
         |> str::split("[year]") |> str::join(
-            as_ue_years(timestamp) + 1970 |> as_str()
+            (as_years(timestamp) + 1)  |> as_str()
                 |> str::pad_left(4, "0")
         )
 }
