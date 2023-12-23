@@ -22,7 +22,7 @@ This is the repository for the standard library of the Gera programming language
 - [x] `std::math` - Complex math functions
 - [x] `std::io` - I/O
 - [x] `std::env` - Environment
-- [ ] `std::time` - Time
+- [x] `std::time` - Time
 - [ ] `std::rng` - Random number generation
 - [ ] `std::prc` - Child processes
 - [ ] `std::thread` - Threads
