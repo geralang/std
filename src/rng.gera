@@ -1,0 +1,93 @@
+
+mod std::rng
+
+use std::(math, str, time, vec)
+
+pub proc new(seed) {
+    return { state = seed }
+}
+
+var LCG_MULTIPLIER = 6364136223846793005
+var LCG_INCREMENT = 1442695040888963407
+
+pub proc next_int(generator) {
+    var r = generator.state
+        * LCG_MULTIPLIER
+        + LCG_INCREMENT
+    generator.state = r
+    return r
+}
+
+pub proc next_flt(generator) {
+    return as_flt(math::abs(next_int(generator)))
+        / as_flt(math::INT_MAX)
+}
+
+pub proc next_int_in(generator, min, max) {
+    case min >= max
+        -> "The minimum (_) is larger than or equal to the maximum (_)!"
+            |> str::fmt([min |> as_str(), max |> as_str()])
+            |> panic()
+    var range = max - min + 1
+    var r = math::abs(next_int(generator))
+    case range <= 0 -> return r // this can only happen if the range is too big
+    return min + r % range
+}
+
+pub proc next_flt_in(generator, min, max) {
+    case min >= max
+        -> "The minimum (_) is larger than or equal to the maximum (_)!"
+            |> str::fmt([min |> as_str(), max |> as_str()])
+            |> panic()
+    var range = max - min
+    var r = next_flt(generator)
+    return min + r * range
+}
+
+var global_gen = {
+    state = 0,
+    seeded = false
+}
+
+proc init_global_gen() {
+    case !global_gen.seeded -> {
+        global_gen.state = time::now_local()
+        global_gen.seeded = true
+    }
+}
+
+pub proc rand_int() {
+    init_global_gen()
+    return next_int(global_gen)
+}
+
+pub proc rand_flt() {
+    init_global_gen()
+    return next_flt(global_gen)
+}
+
+pub proc rand_int_in(min, max) {
+    init_global_gen()
+    return next_int_in(global_gen, min, max)
+}
+
+pub proc rand_flt_in(min, max) {
+    init_global_gen()
+    return next_flt_in(global_gen, min, max)
+}
+
+pub proc rand_choice(iter) {
+    var items = iter |> vec::collect()
+    case items.size == 0 -> panic("Iterator is empty!")
+    var item = items |> vec::at(rand_int_in(0, items.size - 1))
+    return item
+}
+
+pub proc rand_sample(iter) {
+    var items = iter |> vec::collect()
+    case items.size == 0 -> panic("Iterator is empty!")
+    return || {
+        var item = items |> vec::at(rand_int_in(0, items.size - 1))
+        return #next item
+    }
+}
