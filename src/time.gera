@@ -13,7 +13,7 @@ pub proc now_local() {
 }
 
 pub proc unix_epoch() {
-    return years(1969)
+    return years(1970)
 }
 
 pub proc as_utc(local_tz_timestamp) {
@@ -44,8 +44,26 @@ pub proc as_seconds(timestamp) {
     return timestamp / 1000
 }
 
+pub proc as_years_flt(timestamp) {
+    var days = timestamp |> as_days_flt()
+    var leap_years = as_int(days) / static 365 * 4
+    return (days - as_flt(leap_years)) / 365.0 
+}
+pub proc as_days_flt(timestamp) {
+    return as_flt(timestamp) / static 1000.0 * 60.0 * 60.0 * 24.0
+}
+pub proc as_hours_flt(timestamp) {
+    return as_flt(timestamp) / static 1000.0 * 60.0 * 60.0
+}
+pub proc as_minutes_flt(timestamp) {
+    return as_flt(timestamp) / static 1000.0 * 60.0
+}
+pub proc as_seconds_flt(timestamp) {
+    return as_flt(timestamp) / 1000.0
+}
+
 pub proc years(y) {
-    var leap_years = (y + 1) / 4
+    var leap_years = y / 4
     return days(y * 365 + leap_years)
 }
 pub proc months(m) {
@@ -73,7 +91,7 @@ pub proc seconds(s) {
 }
 
 pub proc is_leap_year(year) {
-    return (year + 1) % 4 == 0
+    return year % 4 == 0
 }
 
 pub proc as_month_of_year(timestamp) {
@@ -104,7 +122,7 @@ pub proc as_day_of_month(timestamp) {
 }
 pub proc as_day_of_week(timestamp) {
     // January 1st, 1 AD was a Monday :)
-    return as_days(timestamp) % 7
+    return as_days(timestamp - years(1)) % 7
 }
 pub proc as_hour_of_day(timestamp) {
     return as_hours(timestamp) % 24
@@ -199,7 +217,7 @@ pub proc format_date(timestamp, pattern) {
                 |> str::pad_left(2, "0")
         )
         |> str::split("[year]") |> str::join(
-            (as_years(timestamp) + 1)  |> as_str()
+            as_years(timestamp)  |> as_str()
                 |> str::pad_left(4, "0")
         )
 }
