@@ -122,7 +122,8 @@ pub proc as_day_of_month(timestamp) {
 }
 pub proc as_day_of_week(timestamp) {
     // January 1st, 1 AD was a Monday :)
-    return as_days(timestamp - years(1)) % 7
+    // the '5' is the needed offset
+    return (as_days(timestamp) + 5) % 7
 }
 pub proc as_hour_of_day(timestamp) {
     return as_hours(timestamp) % 24
