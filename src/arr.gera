@@ -1,10 +1,7 @@
 
 mod std::arr
 
-use std::str
-use std::iter
-use std::vec
-use std::opt
+use std::(str, iter, vec, opt, sort)
 
 pub proc subarray(a, start, end) {
     mut var start_index = start
@@ -38,26 +35,33 @@ pub proc subarray_after(a, start_index) {
     return a |> subarray(start_index, a |> length())
 }
 
+pub proc concat(a, other_array) {
+    case length(a) == 0 -> return other_array
+    var r = array(a[0], length(a) + length(other_array))
+    0..length(a) |> iter::for_each(|i| {
+        r[i] = a[i]
+    })
+    var other_offset = length(a)
+    0..length(other_array) |> iter::for_each(|i| {
+        r[i + other_offset] = other_array[i]
+    })
+    return r
+}
+
 pub proc clone(a) {
     return a |> subarray(0, a |> length())
 }
 
-pub proc fill(a, value) {
-    0..length(a) |> iter::for_each(|i| {
-        a[i] = value
-    })
-    return a
-}
-
-pub proc reverse(a) {
-    0..(length(a) / 2) |> iter::for_each(|o| {
+pub proc reversed(a) {
+    var ac = a |> clone()
+    0..(length(ac) / 2) |> iter::for_each(|o| {
         var left = o
-        var right = length(a) - 1 - o
-        var old_left = a[left]
-        a[left] = a[right]
-        a[right] = old_left
+        var right = length(ac) - 1 - o
+        var old_left = ac[left]
+        ac[left] = ac[right]
+        ac[right] = old_left
     })
-    return a
+    return ac
 }
 
 pub proc iter(a) {
@@ -70,4 +74,10 @@ pub proc collect(i) {
     i |> iter::for_each(|e| dest |> vec::push(e))
     return dest.content
         |> subarray_until(dest.size)
+}
+
+pub proc sorted(a, comp) {
+    var ac = a |> clone()
+    sort::quicksort(ac, 0, length(ac), comp)
+    return ac
 }

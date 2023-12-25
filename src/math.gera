@@ -32,5 +32,3 @@ pub proc clamp(x, min, max) {
     case x > max -> return max
     return x    
 }
-
-

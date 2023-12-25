@@ -1,9 +1,7 @@
 
 mod std::vec
 
-use std::iter
-use std::str
-use std::arr
+use std::(iter, str, arr, sort)
 
 pub proc new() {
     return {
@@ -112,6 +110,26 @@ out of bounds for a vector of length _"
     return vector
 }
 
+pub proc clone(vector) {
+    return {
+        content = vector.content
+            |> arr::clone(),
+        size = vector.size
+    }
+}
+
+pub proc reversed(vector) {
+    var vc = vector |> clone()
+    0..(vc.size / 2) |> iter::for_each(|o| {
+        var left = o
+        var right = vc.size - 1 - o
+        var old_left = vc.content[left]
+        vc.content[left] = vc.content[right]
+        vc.content[right] = old_left
+    })
+    return vc
+}
+
 pub proc iter(vector) {
     return 0..vector.size
         |> iter::map(|i| vector.content[i])
@@ -123,15 +141,13 @@ pub proc collect(from_iter) {
     return dest 
 }
 
-pub proc clone(vector) {
-    return {
-        content = vector.content
-            |> arr::clone(),
-        size = vector.size
-    }
-}
-
 pub proc as_array(vector) {
     return vector.content
         |> arr::subarray_until(vector.size)
+}
+
+pub proc sorted(vector, comp) {
+    var vc = vector |> clone()
+    sort::quicksort(vc.content, 0, vc.size, comp)
+    return vc
 }

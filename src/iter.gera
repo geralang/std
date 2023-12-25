@@ -147,3 +147,9 @@ pub proc over_value(v) {
         return #next v
     }
 }
+
+pub proc repeat_over(f) {
+    return || {
+        return #next f()
+    }
+}

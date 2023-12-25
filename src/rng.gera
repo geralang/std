@@ -1,7 +1,7 @@
 
 mod std::rng
 
-use std::(math, str, time, vec)
+use std::(math, str, time, iter)
 
 pub proc new(seed) {
     return { state = seed }
@@ -76,18 +76,13 @@ pub proc rand_flt_in(min, max) {
     return next_flt_in(global_gen, min, max)
 }
 
-pub proc rand_choice(iter) {
-    var items = iter |> vec::collect()
-    case items.size == 0 -> panic("Iterator is empty!")
-    var item = items |> vec::at(rand_int_in(0, items.size - 1))
+pub proc rand_choice(array) {
+    case length(array) == 0 -> panic("Array is empty!")
+    var item = array[rand_int_in(0, length(array) - 1)]
     return item
 }
 
-pub proc rand_sample(iter) {
-    var items = iter |> vec::collect()
-    case items.size == 0 -> panic("Iterator is empty!")
-    return || {
-        var item = items |> vec::at(rand_int_in(0, items.size - 1))
-        return #next item
-    }
+pub proc rand_sample(array) {
+    case length(array) == 0 -> panic("Array is empty!")
+    return iter::repeat_over(|| array[rand_int_in(0, length(array) - 1)])
 }
