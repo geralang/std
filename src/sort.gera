@@ -13,6 +13,8 @@ pub proc descending(f) {
 
 pub proc quicksort(array, start, end, comp) {
     case end - start <= 1 -> return unit
+    var some_comp_val = comp(array[start], array[end])
+    var zero = some_comp_val - some_comp_val
     var current = {
         left = start,
         right = end - 1
@@ -20,10 +22,10 @@ pub proc quicksort(array, start, end, comp) {
     var pivot = array[rng::rand_int_in(current.left, current.right)]
     exhaust(|| {
         current.left = current.left..=current.right
-            |> iter::find(|l| comp(array[l], pivot) >= 0)
+            |> iter::find(|l| comp(array[l], pivot) >= zero)
             |> opt::expect("'l' is guaranteed to meet the pivot")
         current.right = current.right..=current.left
-            |> iter::find(|r| comp(array[r], pivot) <= 0)
+            |> iter::find(|r| comp(array[r], pivot) <= zero)
             |> opt::expect("'r' is guaranteed to meet the pivot")
         case array[current.left] == pivot && array[current.right] == pivot
             -> return #end unit
