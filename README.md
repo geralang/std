@@ -24,5 +24,3 @@ This is the repository for the standard library of the Gera programming language
 - [x] `std::sort` - Sorting
 - [ ] `std::prc` - Child processes
 - [ ] `std::conc` - Concurrency   
-- [ ] `std::json` - JSON
-- [ ] `std::regex` - RegEx
