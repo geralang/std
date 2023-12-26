@@ -16,8 +16,6 @@ This is the repository for the standard library of the Gera programming language
 - [x] `std::res` - Utilities for results
 - [x] `std::str` - String utilities
 - [x] `std::vec` - Vectors
-- [ ] `std::json` - JSON
-- [ ] `std::regex` - RegEx
 - [x] `std::bw` - Bitwise operations
 - [x] `std::io` - I/O
 - [x] `std::env` - Environment
@@ -25,4 +23,6 @@ This is the repository for the standard library of the Gera programming language
 - [x] `std::rng` - Random number generation
 - [x] `std::sort` - Sorting
 - [ ] `std::prc` - Child processes
-- [ ] `std::thread` - Threads
+- [ ] `std::conc` - Concurrency   
+- [ ] `std::json` - JSON
+- [ ] `std::regex` - RegEx
