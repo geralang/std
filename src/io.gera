@@ -9,9 +9,17 @@ pub proc println(thing) {
     thing |> as_str() |> internal_println()
 }
 
+pub proc eprintln(thing) {
+    thing |> as_str() |> internal_eprintln()
+}
+
 target c {
     pub proc print(thing) {
         thing |> as_str() |> internal_print()
+    }
+
+    pub proc eprint(thing) {
+        thing |> as_str() |> internal_eprint()
     }
 
     proc get_error_or(value) {

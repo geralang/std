@@ -6,13 +6,22 @@
 #include "gera.h"
 
 
+void gera_std_io_println(GeraString line) {
+    fwrite(line.data, sizeof(char), line.length_bytes, stdout);
+    putchar('\n');
+}
+
+void gera_std_io_eprintln(GeraString line) {
+    fwrite(line.data, sizeof(char), line.length_bytes, stderr);
+    putchar('\n');
+}
+
 void gera_std_io_print(GeraString thing) {
     fwrite(thing.data, sizeof(char), thing.length_bytes, stdout);
 }
 
-void gera_std_io_println(GeraString line) {
-    fwrite(line.data, sizeof(char), line.length_bytes, stdout);
-    putchar('\n');
+void gera_std_io_eprint(GeraString thing) {
+    fwrite(thing.data, sizeof(char), thing.length_bytes, stderr);
 }
 
 GeraString gera_std_io_inputln() {

@@ -1,6 +1,8 @@
 
-proc std::internal::io::internal_print(str) = gera_std_io_print
 proc std::internal::io::internal_println(str) = gera_std_io_println
+proc std::internal::io::internal_eprintln(str) = gera_std_io_eprintln
+proc std::internal::io::internal_print(str) = gera_std_io_print
+proc std::internal::io::internal_eprint(str) = gera_std_io_eprint
 proc std::io::inputln() -> str = gera_std_io_inputln
 
 proc std::io::file_sep() -> str = gera_std_io_file_sep
