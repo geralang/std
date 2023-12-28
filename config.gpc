@@ -5,7 +5,7 @@ version = "0.1"
 target = "any"
 dependencies = []
 
-build_c = "@GERAP_CC_PATH -O3 -c src-c/bitwise.c src-c/env.c src-c/io.c src-c/prc.c src-c/math.c src-c/time.c @GERAP_CC_ARGS"
+build_c = "@GERAP_CC_PATH -O3 -c src-c/bitwise.c src-c/env.c src-c/io.c src-c/prc.c src-c/math.c src-c/time.c src-c/conc.c src-c/storage.c @GERAP_CC_ARGS -I @GERAP_CCOREDEPS_PATH"
 link_c = [
     "bitwise.o"
     "env.o"
@@ -13,6 +13,8 @@ link_c = [
     "prc.o"
     "math.o"
     "time.o"
+    "conc.o"
+    "storage.o"
 ]
 
 link_js = [

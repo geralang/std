@@ -1,5 +1,5 @@
 
-#include "gera.h"
+#include <gera.h>
 #include <math.h>
 
 gfloat gera_std_math_exp(gfloat x) { return exp(x); }

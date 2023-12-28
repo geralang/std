@@ -2,9 +2,10 @@
 
 This is the repository for the standard library of the Gera programming language.
 
-- [Gera language website](https://geralang.netlify.app)
 - [Gera compiler repository](https://github.com/typesafeschwalbe/gerac)
-
+- [Package manager](https://github.com/typesafeschwalbe/gerap)
+- [VS Code extension](https://github.com/typesafeschwalbe/vscode-gera)
+- [C target core dependencies](https://github.com/typesafeschwalbe/geraccoredeps)
 ### Progress
 
 - [x] `std::arr` - Array utilities
@@ -23,4 +24,4 @@ This is the repository for the standard library of the Gera programming language
 - [x] `std::rng` - Random number generation
 - [x] `std::sort` - Sorting
 - [ ] `std::prc` - Child processes
-- [ ] `std::conc` - Concurrency   
+- [x] `std::conc` - Concurrency   

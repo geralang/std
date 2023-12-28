@@ -1,6 +1,7 @@
 
-#include "gera.h"
+#include <gera.h>
 #include <string.h>
+#include <stdlib.h>
 
 
 static void free_string_array(char* data, size_t size) {
@@ -232,7 +233,7 @@ gbool gera_std_env_is_android() {
 }
 
 gbool gera_std_env_is_unix() {
-    #ifdef __unix__
+    #if defined(unix) || defined(__unix__) || defined(__unix)
         return 1;
     #else
         return 0;

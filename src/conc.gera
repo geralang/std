@@ -1,0 +1,79 @@
+
+mod std::conc
+
+use std::internal::conc::*
+use std::opt
+
+target c {
+    pub proc spawn(task) {
+        return internal_spawn(task)
+    }
+
+    pub proc wait() {
+        internal_wait()
+    }
+
+    pub proc notify(thread) {
+        return internal_notify(thread)
+    }
+
+    pub proc join(thread) {
+        return internal_join(thread)
+    }
+
+    pub proc sleep(time) {
+        return internal_sleep(time)
+    }
+
+    pub proc mutex() {
+        return { value = #none unit }
+    }
+
+    pub proc try_lock(mutex) {
+        var m
+        case mutex.value {
+            #none -> {
+                m = internal_mutex()
+                mutex.value = #some m
+            }
+            #some mutex -> {
+                m = mutex
+            }
+        }
+        return internal_try_lock(m)
+    }
+
+    pub proc lock(mutex) {
+        var m
+        case mutex.value {
+            #none -> {
+                m = internal_mutex()
+                mutex.value = #some m
+            }
+            #some mutex -> {
+                m = mutex
+            }
+        }
+        internal_lock(m)
+    }
+
+    pub proc is_locked(mutex) {
+        return mutex.value
+            |> opt::map(|mutex| internal_is_locked(mutex))
+            |> opt::unwrap_or(false)
+    }
+
+    pub proc unlock(mutex) {
+        var m
+        case mutex.value {
+            #none -> {
+                m = internal_mutex()
+                mutex.value = #some m
+            }
+            #some mutex -> {
+                m = mutex
+            }
+        }
+        internal_unlock(m)
+    }
+}

@@ -99,13 +99,18 @@ pub proc split(s, separator) {
     var until_length = length(s) - length(separator)
     return || {
         case current.done -> return #end unit
-        var next_split = current.anchor..=until_length
-            |> iter::find(|index| 
-                substring(s, index, index + length(separator)) == separator
-            )
+        var next_split
+        case current.anchor <= until_length
+            -> next_split = current.anchor..=until_length
+                |> iter::find(|index| 
+                    substring(s, index, index + length(separator)) == separator
+                ) 
+        else next_split = #none unit
         case next_split {
             #none -> {
-                var result = s |> substring_after(current.anchor)
+                var result = s |> substring_after(
+                    math::min(current.anchor, length(s))
+                )
                 current.anchor = length(s)
                 current.done = true
                 return #next result

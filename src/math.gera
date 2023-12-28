@@ -12,8 +12,8 @@ pub var TAU = 6.28318530717958647692528676655900577
 pub var E = 2.718281828459045
 
 pub proc abs(x) {
-    var z = x - x // z = 0
-    case x < z -> return z - x
+    var zero = x - x
+    case x < zero -> return -x
     return x
 }
 

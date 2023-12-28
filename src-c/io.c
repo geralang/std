@@ -1,27 +1,37 @@
 
+#include <gera.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
-#include "gera.h"
+#include "conc.h"
 
 
 void gera_std_io_println(GeraString line) {
-    fwrite(line.data, sizeof(char), line.length_bytes, stdout);
-    putchar('\n');
+    char buffer[line.length_bytes + 1];
+    memcpy(buffer, line.data, line.length_bytes);
+    buffer[line.length_bytes] = '\n';
+    fwrite(buffer, sizeof(char), line.length_bytes + 1, stdout);
+    fflush(stdout);
 }
 
 void gera_std_io_eprintln(GeraString line) {
-    fwrite(line.data, sizeof(char), line.length_bytes, stderr);
-    putchar('\n');
+    char buffer[line.length_bytes + 1];
+    memcpy(buffer, line.data, line.length_bytes);
+    buffer[line.length_bytes] = '\n';
+    fwrite(buffer, sizeof(char), line.length_bytes + 1, stderr);
+    fflush(stderr);
 }
 
 void gera_std_io_print(GeraString thing) {
     fwrite(thing.data, sizeof(char), thing.length_bytes, stdout);
+    fflush(stdout);
 }
 
 void gera_std_io_eprint(GeraString thing) {
     fwrite(thing.data, sizeof(char), thing.length_bytes, stderr);
+    fflush(stderr);
 }
 
 GeraString gera_std_io_inputln() {
@@ -87,12 +97,12 @@ static const GeraString PATH_SEP = (GeraString) {
 GeraString gera_std_io_path_sep() { return PATH_SEP; }
 
 
-static gbool HAS_ERROR = 0;
+static THREAD_LOCAL gbool HAS_ERROR = 0;
 gbool gera_std_io_has_error() {
     return HAS_ERROR;
 }
 
-GeraString CURRENT_ERROR = (GeraString) {
+GeraString THREAD_LOCAL CURRENT_ERROR = (GeraString) {
     .allocation = NULL, .data = "", .length = 0, .length_bytes = 0
 };
 GeraString gera_std_io_get_error() {
