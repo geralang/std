@@ -165,8 +165,8 @@ typedef struct ThreadData {
     ThreadTask task;
 } ThreadData;
 
-static THREAD_LOCAL gbool HAS_THREAD_ID = 0;
-static THREAD_LOCAL size_t THREAD_ID;
+THREAD_LOCAL gbool HAS_THREAD_ID = 0;
+THREAD_LOCAL size_t THREAD_ID;
 
 THREAD_RET_T thread_start(ThreadData* hdata) {
     ThreadData data = *hdata;

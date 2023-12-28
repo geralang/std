@@ -97,7 +97,7 @@ static const GeraString PATH_SEP = (GeraString) {
 GeraString gera_std_io_path_sep() { return PATH_SEP; }
 
 
-static THREAD_LOCAL gbool HAS_ERROR = 0;
+THREAD_LOCAL gbool HAS_ERROR = 0;
 gbool gera_std_io_has_error() {
     return HAS_ERROR;
 }
