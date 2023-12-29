@@ -97,23 +97,45 @@ static const GeraString PATH_SEP = (GeraString) {
 GeraString gera_std_io_path_sep() { return PATH_SEP; }
 
 
-THREAD_LOCAL gbool HAS_ERROR = 0;
-gbool gera_std_io_has_error() {
-    return HAS_ERROR;
-}
+typedef struct IoEmptyResult {
+    gbool has_error;
+    GeraString error;
+} IoEmptyResult;
 
-GeraString THREAD_LOCAL CURRENT_ERROR = (GeraString) {
-    .allocation = NULL, .data = "", .length = 0, .length_bytes = 0
-};
-GeraString gera_std_io_get_error() {
-    gera___rc_incr(CURRENT_ERROR.allocation);
-    return CURRENT_ERROR;
-}
-void set_current_error(const char* message) {
-    HAS_ERROR = 1;
-    gera___rc_decr(CURRENT_ERROR.allocation);
-    CURRENT_ERROR = gera___alloc_string(message);
-}
+typedef struct IoStringResult {
+    gbool has_error;
+    GeraString error;
+    GeraString value;
+} IoStringResult;
+
+typedef struct IoBoolResult {
+    gbool has_error;
+    GeraString error;
+    gbool value;
+} IoBoolResult;
+
+typedef struct IoStringArrResult {
+    gbool has_error;
+    GeraString error;
+    GeraArray value;
+} IoStringArrResult;
+
+#define IO_RESULT_OK(type, ok_value) \
+    (Io##type##Result) { \
+        .has_error = 0, \
+        .value = ok_value \
+    }
+
+#define IO_EMPTY_RESULT_OK \
+    (IoEmptyResult) { \
+        .has_error = 0 \
+    }
+
+#define IO_RESULT_ERR(type, error_str_nt) \
+    (Io##type##Result) { \
+        .has_error = 1, \
+        .error = gera___alloc_string(error_str_nt) \
+    }
 
 
 static void free_string_array(char* data, size_t size) {
@@ -137,54 +159,46 @@ static void free_string_array(char* data, size_t size) {
         );
 
 
-    void gera_std_io_set_cwd(GeraString path) {
-        HAS_ERROR = 0;
+    IoEmptyResult gera_std_io_set_cwd(GeraString path) {
         GERA_STRING_NULL_TERM(path, path_nt);
         if(!SetCurrentDirectoryA(path_nt)) {
             GET_CURRENT_ERROR(error_reason);
-            set_current_error(error_reason);
+            return IO_RESULT_ERR(Empty, error_reason);
         }
+        return IO_EMPTY_RESULT_OK;
     }
 
 
     gbool gera_std_io_file_exists(GeraString path) {
-        HAS_ERROR = 0;
         GERA_STRING_NULL_TERM(path, path_nt);
         return GetFileAttributesA(path_nt) != INVALID_FILE_ATTRIBUTES;
     }
 
-    GeraString gera_std_io_canonicalize(GeraString path) {
-        HAS_ERROR = 0;
+    IoStringResult gera_std_io_canonicalize(GeraString path) {
         GERA_STRING_NULL_TERM(path, path_nt);
         DWORD path_length = GetFullPathNameA(path_nt, 0, NULL, NULL);
         if(path_length == 0) {
             GET_CURRENT_ERROR(error_reason);
-            set_current_error(error_reason);
-            return (GeraString) {
-                .allocation = NULL, .data = "", .length = 0, .length_bytes = 0
-            };
+            return IO_RESULT_ERR(String, error_reason);
         }
         GeraAllocation* alloc = gera___rc_alloc(
             path_length, &gera___free_nothing
         );
         if(GetFullPathNameA(path_nt, path_length, alloc->data, NULL) == 0) {
             GET_CURRENT_ERROR(error_reason);
-            set_current_error(error_reason);
-            return (GeraString) {
-                .allocation = NULL, .data = "", .length = 0, .length_bytes = 0
-            };
+            return IO_RESULT_ERR(String, error_reason);
         }
         size_t length_bytes = path_length - 1;
         size_t length = 0;
         for(size_t i = 0; i < length_bytes; length += 1) {
             i += gera___codepoint_size(alloc->data[i]);
         }
-        return (GeraString) {
+        return IO_RESULT_OK(String, ((GeraString) {
             .allocation = alloc,
             .data = alloc->data,
             .length_bytes = length_bytes,
             .length = length
-        };
+        }));
     }
 
 
@@ -196,17 +210,16 @@ static void free_string_array(char* data, size_t size) {
         return (attr & FILE_ATTRIBUTE_DIRECTORY) != 0;
     }
 
-    void gera_std_io_create_dir(GeraString path) {
-        HAS_ERROR = 0;
+    IoEmptyResult gera_std_io_create_dir(GeraString path) {
         GERA_STRING_NULL_TERM(path, path_nt);
         if(!CreateDirectoryA(path_nt, NULL)) {
             GET_CURRENT_ERROR(error_reason);
-            set_current_error(error_reason);
+            return IO_RESULT_ERR(Empty, error_reason);
         }
+        return IO_EMPTY_RESULT_OK;
     }
 
-    GeraArray gera_std_io_read_dir(GeraString path) {
-        HAS_ERROR = 0;
+    IoStringArrResult gera_std_io_read_dir(GeraString path) {
         gbool path_ends_with_sep = path.data[path.length_bytes - 1] == '\\';
         size_t path_length = path.length_bytes + (path_ends_with_sep? 3 : 4);
         char path_nt[path_length + 1];
@@ -216,10 +229,7 @@ static void free_string_array(char* data, size_t size) {
         HANDLE dir = FindFirstFileA(path_nt, &entry);
         if(dir == INVALID_HANDLE_VALUE) {
             GET_CURRENT_ERROR(error_reason);
-            set_current_error(error_reason);
-            return (GeraArray) {
-                .allocation = NULL, .data = NULL, .length = 0
-            };
+            return IO_RESULT_ERR(StringArr, error_reason);
         }
         size_t item_count = 0;
         do {
@@ -231,10 +241,7 @@ static void free_string_array(char* data, size_t size) {
         dir = FindFirstFileA(path_nt, &entry);
         if(dir == INVALID_HANDLE_VALUE) {
             GET_CURRENT_ERROR(error_reason);
-            set_current_error(error_reason);
-            return (GeraArray) {
-                .allocation = NULL, .data = NULL, .length = 0
-            };
+            return IO_RESULT_ERR(StringArr, error_reason);
         }
         GeraAllocation* alloc = gera___rc_alloc(
             sizeof(GeraString) * item_count, &free_string_array
@@ -249,25 +256,24 @@ static void free_string_array(char* data, size_t size) {
             item_idx += 1;
         } while(FindNextFileA(dir, &entry) != 0);
         FindClose(dir);     
-        return (GeraArray) {
+        return IO_RESULT_OK(StringArr, ((GeraArray) {
             .allocation = alloc,
             .data = alloc->data,
             .length = item_count
-        };
+        }));
     }
 
-    void gera_std_io_delete_dir(GeraString path) {
-        HAS_ERROR = 0;
+    IoEmptyResult gera_std_io_delete_dir(GeraString path) {
         GERA_STRING_NULL_TERM(path, path_nt);
         if(!RemoveDirectoryA(path_nt)) {
             GET_CURRENT_ERROR(error_reason);
-            set_current_error(error_reason);
+            return IO_RESULT_ERR(Empty, error_reason);
         }
+        return IO_EMPTY_RESULT_OK;
     }
 
 
     gbool gera_std_io_is_file(GeraString path) {
-        HAS_ERROR = 0;
         GERA_STRING_NULL_TERM(path, path_nt);
         DWORD attr = GetFileAttributesA(path_nt);
         if(attr == INVALID_FILE_ATTRIBUTES) { return 0; }
@@ -280,40 +286,34 @@ static void free_string_array(char* data, size_t size) {
     #include <dirent.h>
     
 
-    void gera_std_io_set_cwd(GeraString path) {
-        HAS_ERROR = 0;
+    IoEmptyResult gera_std_io_set_cwd(GeraString path) {
         GERA_STRING_NULL_TERM(path, path_nt);
         if(chdir(path_nt) == -1) {
-            set_current_error(strerror(errno));
+            return IO_RESULT_ERR(Empty, strerror(errno));
         }
+        return IO_EMPTY_RESULT_OK;
     }
 
 
     gbool gera_std_io_file_exists(GeraString path) {
-        HAS_ERROR = 0;
         GERA_STRING_NULL_TERM(path, path_nt);
         struct stat st;
         return stat(path_nt, &st) != -1;
     }
 
-    GeraString gera_std_io_canonicalize(GeraString path) {
-        HAS_ERROR = 0;
+    IoStringResult gera_std_io_canonicalize(GeraString path) {
         GERA_STRING_NULL_TERM(path, path_nt);
         char* absolute_path_nt = realpath(path_nt, NULL);
         if(absolute_path_nt == NULL) {
-            set_current_error(strerror(errno));
-            return (GeraString) {
-                .allocation = NULL, .data = "", .length = 0, .length_bytes = 0
-            };
+            return IO_RESULT_ERR(String, strerror(errno));
         }
         GeraString absolute_path = gera___alloc_string(absolute_path_nt);
         free(absolute_path_nt);
-        return absolute_path;
+        return IO_RESULT_OK(String, absolute_path);
     }
 
 
     gbool gera_std_io_is_dir(GeraString path) {
-        HAS_ERROR = 0;
         GERA_STRING_NULL_TERM(path, path_nt);
         struct stat st;
         if(stat(path_nt, &st) == -1) { return 0; }
@@ -323,28 +323,24 @@ static void free_string_array(char* data, size_t size) {
     static const mode_t DEFAULT_DIR_MODE = S_IRUSR | S_IWUSR | S_IXUSR
         | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 
-    void gera_std_io_create_dir(GeraString path) {
-        HAS_ERROR = 0;
+    IoEmptyResult gera_std_io_create_dir(GeraString path) {
         GERA_STRING_NULL_TERM(path, path_nt);
         struct stat st;
         if(stat(path_nt, &st) == -1) {
             if(mkdir(path_nt, DEFAULT_DIR_MODE) == -1) {
-                set_current_error(strerror(errno));
+                return IO_RESULT_ERR(Empty, strerror(errno));
             }
         }
+        return IO_EMPTY_RESULT_OK;
     }
 
-    GeraArray gera_std_io_read_dir(GeraString path) {
-        HAS_ERROR = 0;
+    IoStringArrResult gera_std_io_read_dir(GeraString path) {
         GERA_STRING_NULL_TERM(path, path_nt);
         DIR* dir = opendir(path_nt);
         struct dirent* entry;
         size_t item_count = 0;
         if(dir == NULL) {
-            set_current_error(strerror(errno));
-            return (GeraArray) {
-                .allocation = NULL, .data = NULL, .length = 0
-            };
+            return IO_RESULT_ERR(StringArr, strerror(errno));
         }
         while ((entry = readdir(dir)) != NULL) {
             if(strcmp(entry->d_name, ".") == 0
@@ -354,10 +350,7 @@ static void free_string_array(char* data, size_t size) {
         closedir(dir);
         dir = opendir(path_nt);
         if(dir == NULL) {
-            set_current_error(strerror(errno));
-            return (GeraArray) {
-                .allocation = NULL, .data = NULL, .length = 0
-            };
+            return IO_RESULT_ERR(StringArr, strerror(errno));
         }
         GeraAllocation* alloc = gera___rc_alloc(
             sizeof(GeraString) * item_count, &free_string_array
@@ -372,24 +365,23 @@ static void free_string_array(char* data, size_t size) {
             item_idx += 1;
         }
         closedir(dir);
-        return (GeraArray) {
+        return IO_RESULT_OK(StringArr, ((GeraArray) {
             .allocation = alloc,
             .data = alloc->data,
             .length = item_count
-        };
+        }));
     }
 
-    void gera_std_io_delete_dir(GeraString path) {
-        HAS_ERROR = 0;
+    IoEmptyResult gera_std_io_delete_dir(GeraString path) {
         GERA_STRING_NULL_TERM(path, path_nt);
         if(rmdir(path_nt) == -1) {
-            set_current_error(strerror(errno));
+            return IO_RESULT_ERR(Empty, strerror(errno));
         }
+        return IO_EMPTY_RESULT_OK;
     }
 
 
     gbool gera_std_io_is_file(GeraString path) {
-        HAS_ERROR = 0;
         GERA_STRING_NULL_TERM(path, path_nt);
         struct stat st;
         if(stat(path_nt, &st) == -1) { return 0; }
@@ -397,28 +389,23 @@ static void free_string_array(char* data, size_t size) {
     }
 #endif
 
-void gera_std_io_write_file(GeraString content, GeraString path) {
-    HAS_ERROR = 0;
+IoEmptyResult gera_std_io_write_file(GeraString content, GeraString path) {
     GERA_STRING_NULL_TERM(content, content_nt);
     GERA_STRING_NULL_TERM(path, path_nt);
     FILE* dest = fopen(path_nt, "w");
     if(dest == NULL) {
-        set_current_error(strerror(errno));
-        return;
+        return IO_RESULT_ERR(Empty, strerror(errno));
     }
     fputs(content_nt, dest);
     fclose(dest);
+    return IO_EMPTY_RESULT_OK;
 }
 
-GeraString gera_std_io_read_file(GeraString path) {
-    HAS_ERROR = 0;
+IoStringResult gera_std_io_read_file(GeraString path) {
     GERA_STRING_NULL_TERM(path, path_nt);
     FILE* src = fopen(path_nt, "r");
     if(src == NULL) {
-        set_current_error(strerror(errno));
-        return (GeraString) {
-            .allocation = NULL, .data = "", .length = 0, .length_bytes = 0
-        };
+        return IO_RESULT_ERR(String, strerror(errno));
     }
     fseek(src, 0, SEEK_END);
     size_t length_bytes = ftell(src);
@@ -430,18 +417,18 @@ GeraString gera_std_io_read_file(GeraString path) {
     for(size_t i = 0; i < length_bytes; length += 1) {
         i += gera___codepoint_size(alloc->data[i]);
     }
-    return (GeraString) {
+    return IO_RESULT_OK(String, ((GeraString) {
         .allocation = alloc,
         .data = alloc->data,
         .length_bytes = length_bytes,
         .length = length
-    };
+    }));
 }
 
-void gera_std_io_delete_file(GeraString path) {
-    HAS_ERROR = 0;
+IoEmptyResult gera_std_io_delete_file(GeraString path) {
     GERA_STRING_NULL_TERM(path, path_nt);
     if(remove(path_nt) == -1) {
-        set_current_error(strerror(errno));
+        return IO_RESULT_ERR(Empty, strerror(errno));
     }
+    return IO_EMPTY_RESULT_OK;
 }

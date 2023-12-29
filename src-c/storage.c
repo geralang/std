@@ -51,6 +51,14 @@ void storage_remove(Storage* s, size_t idx) {
     mutex_unlock(&s->mutex);
 }
 
+void storage_lock(Storage* s) {
+    mutex_lock(&s->mutex);
+}
+
+void storage_unlock(Storage* s) {
+    mutex_unlock(&s->mutex);
+}
+
 void storage_free(Storage* s) {
     mutex_free(&s->mutex);
     free(s->data);

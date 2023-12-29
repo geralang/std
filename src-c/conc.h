@@ -13,11 +13,6 @@ typedef GERA_CLOSURE_NOARGS(void) ThreadTask;
     #define THREAD_RET_T DWORD
     #define THREAD_RET_V 0
     #define MUTEX CRITICAL_SECTION
-    #ifdef _MSC_VER
-        #define THREAD_LOCAL __declspec(thread)
-    #else
-        #define THREAD_LOCAL __thread
-    #endif
     typedef struct {
         MUTEX mutex;
         CONDITION_VARIABLE cond;
@@ -28,7 +23,6 @@ typedef GERA_CLOSURE_NOARGS(void) ThreadTask;
     #define THREAD_RET_T void*
     #define THREAD_RET_V NULL
     #define MUTEX pthread_mutex_t
-    #define THREAD_LOCAL _Thread_local
     typedef struct {
         MUTEX mutex;
         pthread_cond_t cond;

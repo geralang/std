@@ -22,6 +22,8 @@ Storage storage_create(size_t element_size);
 size_t storage_insert(Storage* s, void* data);
 void* storage_get(Storage* s, size_t idx);
 void storage_remove(Storage* s, size_t idx);
+void storage_lock(Storage* s);
+void storage_unlock(Storage* s);
 void storage_free(Storage* s);
 
 

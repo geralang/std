@@ -22,14 +22,19 @@ target c {
         thing |> as_str() |> internal_eprint()
     }
 
-    proc get_error_or(value) {
-        case internal_has_error() -> return #err internal_get_error()
-        return #ok value
+    proc ioresult_as_result(value) {
+        case value.has_error -> return #err value.error
+        return #ok value.value
+    }
+
+    proc ioresult_as_empty_result(value) {
+        case value.has_error -> return #err value.error
+        return #ok unit
     }
 
     pub proc set_cwd(path) {
-        internal_set_cwd(path)
-        return get_error_or(unit)
+        return internal_set_cwd(path)
+            |> ioresult_as_empty_result()
     }
 
     pub proc get_cwd() {
@@ -46,49 +51,47 @@ target c {
     }
 
     pub proc canonicalize(path) {
-        var absolute = internal_canonicalize(path)
-        return get_error_or(absolute)
+        return internal_canonicalize(path)
+            |> ioresult_as_result()
     }
 
 
     pub proc is_dir(path) {
-        var is = internal_is_dir(path)
-        return get_error_or(is)
+        return internal_is_dir(path)
     }
 
     pub proc create_dir(path) {
-        internal_create_dir(path)
-        return get_error_or(unit)
+        return internal_create_dir(path)
+            |> ioresult_as_empty_result()
     }
 
     pub proc read_dir(path) {
-        var files = internal_read_dir(path)
-        return get_error_or(files)
+        return internal_read_dir(path)
+            |> ioresult_as_result()
     }
 
     pub proc delete_dir(path) {
-        internal_delete_dir(path)
-        return get_error_or(unit)
+        return internal_delete_dir(path)
+            |> ioresult_as_empty_result()
     }
 
 
     pub proc is_file(path) {
-        var is = internal_is_file(path)
-        return get_error_or(is)
+        return internal_is_file(path)
     }
 
     pub proc write_file(content, path) {
-        internal_write_file(content, path)
-        return get_error_or(unit)
+        return internal_write_file(content, path)
+            |> ioresult_as_empty_result()
     }
 
     pub proc read_file(path) {
-        var content = internal_read_file(path)
-        return get_error_or(content)
+        return internal_read_file(path)
+            |> ioresult_as_result()
     }
 
     pub proc delete_file(path) {
-        internal_delete_file(path)
-        return get_error_or(unit)
+        return internal_delete_file(path)
+            |> ioresult_as_empty_result()
     }
 }
