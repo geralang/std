@@ -203,7 +203,6 @@ static void free_string_array(char* data, size_t size) {
 
 
     gbool gera_std_io_is_dir(GeraString path) {
-        HAS_ERROR = 0;
         GERA_STRING_NULL_TERM(path, path_nt);
         DWORD attr = GetFileAttributesA(path_nt);
         if(attr == INVALID_FILE_ATTRIBUTES) { return 0; }
