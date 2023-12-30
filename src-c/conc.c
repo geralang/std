@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "conc.h"
 #include "storage.h"
+#include "prc.h"
+
 
 #ifdef _WIN32
     THREAD thread_create(void* task, void* arg) {
@@ -197,14 +199,6 @@ THREAD_RET_T thread_start(ThreadTask* htask) {
 
 typedef GERA_CLOSURE_NOARGS(gint) ThreadHandle;
 
-void free_thread_handle(char* data, size_t size) {
-    storage_remove(&THREAD_STORAGE, *((size_t*) data));
-}
-
-gint get_thread_handle(GeraAllocation* captures) {
-    return *((gint*) captures->data);
-}
-
 typedef struct ThreadEntry {
     THREAD thread;
     MUTEX mutex;
@@ -212,16 +206,33 @@ typedef struct ThreadEntry {
     GeraAllocation* handle_allocation;
 } ThreadEntry;
 
+void free_thread_handle(char* data, size_t size) {
+    size_t id = *((size_t*) data);
+    ThreadEntry* thread_entry = storage_get(&THREAD_STORAGE, id);
+    mutex_free(&thread_entry->mutex);
+    cond_var_free(&thread_entry->cond_var);
+    storage_remove(&THREAD_STORAGE, id);
+}
+
+gint get_thread_handle(GeraAllocation* captures) {
+    return *((gint*) captures->data);
+}
+
 static inline void init_mutex_storage();
 
-ThreadHandle gera_std_conc_spawn(ThreadTask task) {
-    gera___rc_incr(task.captures);
+static inline void init_thread_storage() {
     if(!HAS_THREAD_STORAGE) {
         // this can only happen if there was no thread yet, no need for a mutex
         HAS_THREAD_STORAGE = 1;
         THREAD_STORAGE = storage_create(sizeof(ThreadEntry));
     }
     init_mutex_storage();
+    init_process_storage();
+}
+
+ThreadHandle gera_std_conc_spawn(ThreadTask task) {
+    gera___rc_incr(task.captures);
+    init_thread_storage();
     ThreadEntry temp_thread_entry = (ThreadEntry) {
         .mutex = mutex_create(),
         .cond_var = cond_var_create()
@@ -245,6 +256,7 @@ ThreadHandle gera_std_conc_spawn(ThreadTask task) {
 }
 
 void gera_std_conc_wait() {
+    init_thread_storage();
     THREAD this_thread = thread_current();
     ThreadEntry* this_thread_entry;
     char found_entry = 0;
@@ -265,6 +277,7 @@ void gera_std_conc_wait() {
 }
 
 void gera_std_conc_notify(ThreadHandle other) {
+    init_thread_storage();
     gint sid = other.call(other.captures);
     size_t id = *((size_t*) &sid);
     if(id >= THREAD_STORAGE.data_length) {
@@ -278,6 +291,7 @@ void gera_std_conc_notify(ThreadHandle other) {
 }
 
 void gera_std_conc_join(ThreadHandle other) {
+    init_thread_storage();
     gint sid = other.call(other.captures);
     size_t id = *((size_t*) &sid);
     if(id >= THREAD_STORAGE.data_length) {
@@ -316,14 +330,6 @@ static Storage MUTEX_STORAGE;
 
 typedef GERA_CLOSURE_NOARGS(gint) MutexHandle;
 
-void free_mutex_handle(char* data, size_t size) {
-    storage_remove(&MUTEX_STORAGE, *((size_t*) data));
-}
-
-gint get_mutex_handle(GeraAllocation* captures) {
-    return *((gint*) captures->data);
-}
-
 typedef struct MutexEntry {
     MUTEX mutex;
     MUTEX data_mutex;
@@ -331,6 +337,18 @@ typedef struct MutexEntry {
     char has_owner;
     GeraAllocation* handle_allocation;
 } MutexEntry;
+
+void free_mutex_handle(char* data, size_t size) {
+    size_t id = *((size_t*) data);
+    MutexEntry* mutex_entry = storage_get(&MUTEX_STORAGE, id);
+    mutex_free(&mutex_entry->data_mutex);
+    mutex_free(&mutex_entry->mutex);
+    storage_remove(&MUTEX_STORAGE, id);
+}
+
+gint get_mutex_handle(GeraAllocation* captures) {
+    return *((gint*) captures->data);
+}
 
 static inline void init_mutex_storage() {
     if(!HAS_MUTEX_STORAGE) {
@@ -359,6 +377,7 @@ MutexHandle gera_std_conc_mutex() {
 }
 
 gbool gera_std_conc_try_lock(MutexHandle mutex_handle) {
+    init_mutex_storage();
     gint sid = mutex_handle.call(mutex_handle.captures);
     size_t id = *((size_t*) &sid);
     if(id >= MUTEX_STORAGE.data_length) {
@@ -384,6 +403,7 @@ gbool gera_std_conc_try_lock(MutexHandle mutex_handle) {
 }
 
 void gera_std_conc_lock(MutexHandle mutex_handle) {
+    init_mutex_storage();
     gint sid = mutex_handle.call(mutex_handle.captures);
     size_t id = *((size_t*) &sid);
     if(id >= MUTEX_STORAGE.data_length) {
@@ -406,6 +426,7 @@ void gera_std_conc_lock(MutexHandle mutex_handle) {
 }
 
 gbool gera_std_conc_is_locked(MutexHandle mutex_handle) {
+    init_mutex_storage();
     gint sid = mutex_handle.call(mutex_handle.captures);
     size_t id = *((size_t*) &sid);
     if(id >= MUTEX_STORAGE.data_length) {
@@ -422,6 +443,7 @@ gbool gera_std_conc_is_locked(MutexHandle mutex_handle) {
 }
 
 void gera_std_conc_unlock(MutexHandle mutex_handle) {
+    init_mutex_storage();
     gint sid = mutex_handle.call(mutex_handle.captures);
     size_t id = *((size_t*) &sid);
     if(id >= MUTEX_STORAGE.data_length) {
