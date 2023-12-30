@@ -34,8 +34,6 @@
     #include <sys/time.h>
     #include <time.h>
 
-    #include <stdio.h>
-
     gint std_time_utc_unix_millis() {
         struct timeval utv;
         gettimeofday(&utv, NULL);

@@ -48,6 +48,21 @@ pub proc take(iter, n) {
     }
 }
 
+pub proc take_while(iter, cond) {
+    mut var done = false
+    return || {
+        case done -> return #end unit
+        var value
+        case iter() {
+            #end -> return #end unit
+            #next n -> value = n
+        }
+        case cond(value) -> return #next value
+        done = true
+        return #end unit
+    }
+}
+
 pub proc skip(iter, n) {
     iter |> take(n) |> exhaust()
     return iter
