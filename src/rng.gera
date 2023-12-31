@@ -3,46 +3,50 @@ mod std::rng
 
 use std::(math, str, time, iter)
 
-pub proc new(seed) {
-    return { state = seed }
-}
-
 var LCG_MULTIPLIER = 6364136223846793005
 var LCG_INCREMENT = 1442695040888963407
 
-pub proc next_int(generator) {
-    var r = generator.state
-        * LCG_MULTIPLIER
-        + LCG_INCREMENT
-    generator.state = r
-    return r
-}
+pub proc Generator(seed) { return {
+    state = seed,
 
-pub proc next_flt(generator) {
-    return as_flt(math::abs(next_int(generator)))
-        / as_flt(math::INT_MAX)
-}
+    set_seed = |self, new_seed| {
+        self.state = new_seed
+    },
 
-pub proc next_int_in(generator, min, max) {
-    case min >= max
-        -> "The minimum (_) is larger than or equal to the maximum (_)!"
-            |> str::fmt([min |> as_str(), max |> as_str()])
-            |> panic()
-    var range = max - min + 1
-    var r = math::abs(next_int(generator))
-    case range <= 0 -> return r // this can only happen if the range is too big
-    return min + r % range
-}
+    next_int = |self| {
+        var r = self.state
+            * LCG_MULTIPLIER
+            + LCG_INCREMENT
+        self.state = r
+        return r
+    },
 
-pub proc next_flt_in(generator, min, max) {
-    case min >= max
-        -> "The minimum (_) is larger than or equal to the maximum (_)!"
-            |> str::fmt([min |> as_str(), max |> as_str()])
-            |> panic()
-    var range = max - min
-    var r = next_flt(generator)
-    return min + r * range
-}
+    next_flt = |self| {
+        return as_flt(self:next_int() |> math::abs())
+            / as_flt(math::INT_MAX)
+    },
+
+    next_int_in = |self, min, max| {
+        case min >= max
+            -> "The minimum (_) is larger than or equal to the maximum (_)!"
+                |> str::fmt([min |> as_str(), max |> as_str()])
+                |> panic()
+        var range = max - min + 1
+        var r = self:next_int() |> math::abs()
+        case range <= 0 -> return r // this can only happen if the range is too big
+        return min + r % range
+    },
+
+    next_flt_in = |self, min, max| {
+        case min >= max
+            -> "The minimum (_) is larger than or equal to the maximum (_)!"
+                |> str::fmt([min |> as_str(), max |> as_str()])
+                |> panic()
+        var range = max - min
+        var r = self:next_flt()
+        return min + r * range
+    }
+} }
 
 var global_gen = {
     state = 0,
@@ -58,22 +62,40 @@ proc init_global_gen() {
 
 pub proc rand_int() {
     init_global_gen()
-    return next_int(global_gen)
+    var r = global_gen.state
+        * LCG_MULTIPLIER
+        + LCG_INCREMENT
+    global_gen.state = r
+    return r
 }
 
 pub proc rand_flt() {
     init_global_gen()
-    return next_flt(global_gen)
+    return as_flt(rand_int() |> math::abs())
+        / as_flt(math::INT_MAX)
 }
 
 pub proc rand_int_in(min, max) {
     init_global_gen()
-    return next_int_in(global_gen, min, max)
+    case min >= max
+        -> "The minimum (_) is larger than or equal to the maximum (_)!"
+            |> str::fmt([min |> as_str(), max |> as_str()])
+            |> panic()
+    var range = max - min + 1
+    var r = rand_int() |> math::abs()
+    case range <= 0 -> return r // this can only happen if the range is too big
+    return min + r % range
 }
 
 pub proc rand_flt_in(min, max) {
     init_global_gen()
-    return next_flt_in(global_gen, min, max)
+    case min >= max
+        -> "The minimum (_) is larger than or equal to the maximum (_)!"
+            |> str::fmt([min |> as_str(), max |> as_str()])
+            |> panic()
+    var range = max - min
+    var r = rand_flt()
+    return min + r * range
 }
 
 pub proc rand_choice(array) {

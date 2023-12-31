@@ -5,75 +5,63 @@ use std::internal::conc::*
 use std::opt
 
 target c {
-    pub proc spawn(task) {
-        return internal_spawn(task)
-    }
+    pub proc Thread(task) { return {
+        handle = internal_spawn(task),
+
+        notify = |self| {
+            internal_notify(self.handle)
+            return self
+        },
+
+        join = |self| {
+            internal_join(self.handle)
+            return self
+        }
+    } }
 
     pub proc wait() {
         internal_wait()
-    }
-
-    pub proc notify(thread) {
-        return internal_notify(thread)
-    }
-
-    pub proc join(thread) {
-        return internal_join(thread)
     }
 
     pub proc sleep(time) {
         return internal_sleep(time)
     }
 
-    pub proc mutex() {
-        return { value = #none unit }
-    }
+    pub proc Mutex() { return {
+        handle = #none unit,
 
-    pub proc try_lock(mutex) {
-        var m
-        case mutex.value {
-            #none -> {
-                m = internal_mutex()
-                mutex.value = #some m
+        init_handle = |self| {
+            case self.handle |> opt::is_none() -> {
+                self.handle = #some internal_mutex()
             }
-            #some mutex -> {
-                m = mutex
-            }
+        },
+
+        try_lock = |self| {
+            self:init_handle()
+            return self.handle
+                |> opt::expect("handle should exist at this point")
+                |> internal_try_lock()
+        },
+
+        lock = |self| {
+            self:init_handle()
+            self.handle
+                |> opt::expect("handle should exist at this point")
+                |> internal_lock()
+            return self
+        },
+
+        is_locked = |self| {
+            return self.handle
+                |> opt::map(internal_is_locked)
+                |> opt::unwrap_or(false)
+        },
+
+        unlock = |self| {
+            self:init_handle()
+            return self.handle
+                |> opt::expect("handle should exist at this point")
+                |> internal_unlock()
         }
-        return internal_try_lock(m)
-    }
-
-    pub proc lock(mutex) {
-        var m
-        case mutex.value {
-            #none -> {
-                m = internal_mutex()
-                mutex.value = #some m
-            }
-            #some mutex -> {
-                m = mutex
-            }
-        }
-        internal_lock(m)
-    }
-
-    pub proc is_locked(mutex) {
-        return mutex.value
-            |> opt::map(|mutex| internal_is_locked(mutex))
-            |> opt::unwrap_or(false)
-    }
-
-    pub proc unlock(mutex) {
-        var m
-        case mutex.value {
-            #none -> {
-                m = internal_mutex()
-                mutex.value = #some m
-            }
-            #some mutex -> {
-                m = mutex
-            }
-        }
-        internal_unlock(m)
-    }
+    } }
 }

@@ -10,46 +10,46 @@ target c {
         return panic("Exited!")
     }
 
-    pub proc run(program, arguments) {
-        return internal_run(program, arguments)
-    }
+    pub proc Process(program, arguments) { return {
+        handle = internal_run(program, arguments),
 
-    pub proc kill(process) {
-        internal_kill(process)
-        return process
-    }
+        kill = |self| {
+            internal_kill(self.handle)
+            return self
+        },
 
-    pub proc await(process) {
-        internal_await(process)
-        return process
-    }
+        await = |self| {
+            internal_await(self.handle)
+            return self
+        },
 
-    pub proc output(process) {
-        return internal_read_stdout(process)
-    }
+        output = |self| {
+            return internal_read_stdout(self.handle)
+        },
 
-    pub proc eoutput(process) {
-        return internal_read_stderr(process)
-    }
+        eoutput = |self| {
+            return internal_read_stderr(self.handle)
+        },
 
-    pub proc input(process, text) {
-        internal_write_stdin(process, text)
-        return process
-    }
+        input = |self, text| {
+            internal_write_stdin(self.handle, text)
+            return self
+        },
 
-    pub proc inputln(process, text) {
-        internal_write_stdin(process, text |> concat("\n"))
-        return process
-    }
+        inputln = |self, text| {
+            internal_write_stdin(self.handle, text |> concat("\n"))
+            return self
+        },
+        
+        exit_code = |self| {
+            var status = internal_status(self.handle)
+            case !status.is_finished -> return #none unit
+            else return #some status.exit_code
+        },
 
-    pub proc exit_code(process) {
-        var status = internal_status(process)
-        case !status.is_finished -> return #none unit
-        else return #some status.exit_code
-    }
-
-    pub proc is_done(process) {
-        var status = internal_status(process)
-        return status.is_finished
-    }
+        is_done = |self| {
+            var status = internal_status(self.handle)
+            return status.is_finished
+        }
+    } }
 }

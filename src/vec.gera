@@ -3,151 +3,148 @@ mod std::vec
 
 use std::(iter, str, arr, sort)
 
-pub proc new() {
-    return {
-        content = [],
-        size = 0
+pub proc Vector() { return {
+    content = [],
+    size = 0,
+
+    grow = |self, default_value, new_alloc_size| {
+        var new_content = array(default_value, new_alloc_size)
+        0..length(self.content) |> iter::for_each(|i| {
+            new_content[i] = self.content[i]
+        })
+        self.content = new_content
+        return self
+    },
+
+    push = |self, item| {
+        var new_size = self.size + 1
+        case length(self.content) == 0
+            -> self:grow(item, 16)
+        else case new_size > length(self.content)
+            -> self:grow(item, length(self.content) * 2)
+        self.content[self.size] = item
+        self.size = new_size
+        return self
+    },
+
+    append_arr = |self, appended_array| {
+        case length(appended_array) == 0 -> return self
+        var new_size = self.size + length(appended_array)
+        case new_size > length(self.content)
+            -> self:grow(appended_array[0], new_size)
+        0..length(appended_array) |> iter::for_each(|i| {
+            self.content[self.size + i] = appended_array[i]
+        })
+        self.size = new_size
+        return self
+    },
+
+    append_vec = |self, appended_vector| {
+        case appended_vector.size == 0 -> return self
+        var new_size = self.size + appended_vector.size
+        case new_size > length(self.content)
+            -> self:grow(appended_vector.content[0], new_size)
+        0..appended_vector.size |> iter::for_each(|i| {
+            self.content[self.size + i] = appended_vector.content[i]
+        })
+        self.size = new_size
+        return self
+    },
+
+    insert = |self, index, item| {
+        var new_size = self.size + 1
+        case new_size > length(self.content)
+            -> self:grow(item, length(self.content) * 2)
+        mut var idx = index
+        case index < 0 -> idx = index + self.size
+        case idx > self.size -> "the insertion index _ is \
+    out of bounds for a vector of length _"
+            |> str::fmt([idx |> as_str(), self.size |> as_str()])
+            |> panic()
+        idx..self.size |> iter::for_each(|i| {
+            self.content[i + 1] = self.content[i]
+        })
+        self.content[idx] = item
+        self.size = new_size
+        return self
+    },
+
+    pop = |self| {
+        self.size = self.size - 1
+        return self
+    },
+
+    remove = |self, index| {
+        mut var idx = index
+        case index < 0 -> idx = index + self.size
+        case idx >= self.size -> "the index _ is \
+    out of bounds for a self of length _"
+            |> str::fmt([idx |> as_str(), self.size |> as_str()])
+            |> panic()
+        self.size = self.size - 1
+        idx..self.size |> iter::for_each(|i| {
+            self.content[i] = self.content[i + 1]
+        })
+        return self
+    },
+
+    at = |self, index| {
+        mut var idx = index
+        case index < 0 -> idx = index + self.size
+        case idx >= self.size -> "the index _ is \
+    out of bounds for a vector of length _"
+            |> str::fmt([idx |> as_str(), self.size |> as_str()])
+            |> panic()
+        return self.content[idx]
+    },
+
+    set = |self, index, value| {
+        mut var idx = index
+        case index < 0 -> idx = index + self.size
+        case idx >= self.size -> "the index _ is \
+    out of bounds for a vector of length _"
+            |> str::fmt([idx |> as_str(), self.size |> as_str()])
+            |> panic()
+        self.content[idx] = value
+        return self
+    },
+
+    clone = |self| {
+        var cloned = Vector()
+        cloned.content = self.content |> arr::clone()
+        cloned.size = self.size
+        return cloned
+    },
+
+    reverse = |self| {
+        0..(self.size / 2) |> iter::for_each(|o| {
+            var left = o
+            var right = self.size - 1 - o
+            var old_left = self.content[left]
+            self.content[left] = self.content[right]
+            self.content[right] = old_left
+        })
+        return self
+    },
+
+    iter = |self| {
+        return 0..self.size
+            |> iter::map(|i| self.content[i])
+    },
+
+    as_array = |self| {
+        return self.content
+            |> arr::subarray_until(self.size)
+    },
+
+    sort = |self, comp| {
+        sort::quicksort(self.content, 0, self.size, comp)
+        return self
     }
-}
-
-proc grow(vector, default_value, new_alloc_size) {
-    var new_content = array(default_value, new_alloc_size)
-    0..length(vector.content) |> iter::for_each(|i| {
-        new_content[i] = vector.content[i]
-    })
-    vector.content = new_content
-}
-
-pub proc push(vector, item) {
-    var new_size = vector.size + 1
-    case length(vector.content) == 0 -> vector |> grow(item, 16)
-    else case new_size > length(vector.content) ->
-        vector |> grow(item, length(vector.content) * 2)
-    vector.content[vector.size] = item
-    vector.size = new_size
-    return vector
-}
-
-pub proc append_array(vector, appended_array) {
-    case length(appended_array) == 0 -> return vector
-    var new_size = vector.size + length(appended_array)
-    case new_size > length(vector.content) ->
-        vector |> grow(appended_array[0], new_size)
-    0..length(appended_array) |> iter::for_each(|i| {
-        vector.content[vector.size + i] = appended_array[i]
-    })
-    vector.size = new_size
-    return vector
-}
-
-pub proc append_vector(vector, appended_vector) {
-    case appended_vector.size == 0 -> return vector
-    var new_size = vector.size + appended_vector.size
-    case new_size > length(vector.content) ->
-        vector |> grow(appended_vector.content[0], new_size)
-    0..appended_vector.size |> iter::for_each(|i| {
-        vector.content[vector.size + i] = appended_vector.content[i]
-    })
-    vector.size = new_size
-    return vector
-}
-
-pub proc insert(vector, index, item) {
-    var new_size = vector.size + 1
-    case new_size > length(vector.content) ->
-        vector |> grow(item, length(vector.content) * 2)
-    mut var idx = index
-    case index < 0 -> idx = index + vector.size
-    case idx > vector.size -> "the insertion index _ is \
-out of bounds for a vector of length _"
-        |> str::fmt([idx |> as_str(), vector.size |> as_str()])
-        |> panic()
-    idx..vector.size |> iter::for_each(|i| {
-        vector.content[i + 1] = vector.content[i]
-    })
-    vector.content[idx] = item
-    vector.size = new_size
-    return vector
-}
-
-pub proc pop(vector) {
-    vector.size = vector.size - 1
-    return vector
-}
-
-pub proc remove(vector, index) {
-    mut var idx = index
-    case index < 0 -> idx = index + vector.size
-    case idx >= vector.size -> "the index _ is \
-out of bounds for a vector of length _"
-        |> str::fmt([idx |> as_str(), vector.size |> as_str()])
-        |> panic()
-    vector.size = vector.size - 1
-    idx..vector.size |> iter::for_each(|i| {
-        vector.content[i] = vector.content[i + 1]
-    })
-    return vector
-}
-
-pub proc at(vector, index) {
-    mut var idx = index
-    case index < 0 -> idx = index + vector.size
-    case idx >= vector.size -> "the index _ is \
-out of bounds for a vector of length _"
-        |> str::fmt([idx |> as_str(), vector.size |> as_str()])
-        |> panic()
-    return vector.content[idx]
-}
-
-pub proc set(vector, index, value) {
-    mut var idx = index
-    case index < 0 -> idx = index + vector.size
-    case idx >= vector.size -> "the index _ is \
-out of bounds for a vector of length _"
-        |> str::fmt([idx |> as_str(), vector.size |> as_str()])
-        |> panic()
-    vector.content[idx] = value
-    return vector
-}
-
-pub proc clone(vector) {
-    return {
-        content = vector.content
-            |> arr::clone(),
-        size = vector.size
-    }
-}
-
-pub proc reversed(vector) {
-    var vc = vector |> clone()
-    0..(vc.size / 2) |> iter::for_each(|o| {
-        var left = o
-        var right = vc.size - 1 - o
-        var old_left = vc.content[left]
-        vc.content[left] = vc.content[right]
-        vc.content[right] = old_left
-    })
-    return vc
-}
-
-pub proc iter(vector) {
-    return 0..vector.size
-        |> iter::map(|i| vector.content[i])
-}
+} }
 
 pub proc collect(from_iter) {
-    var dest = new()
-    from_iter |> iter::for_each(|item| dest |> push(item))
+    var dest = Vector()
+    from_iter |> iter::for_each(|item| dest:push(item))
     return dest 
-}
-
-pub proc as_array(vector) {
-    return vector.content
-        |> arr::subarray_until(vector.size)
-}
-
-pub proc sorted(vector, comp) {
-    var vc = vector |> clone()
-    sort::quicksort(vc.content, 0, vc.size, comp)
-    return vc
 }
