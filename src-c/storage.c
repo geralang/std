@@ -30,7 +30,9 @@ size_t storage_insert(Storage* s, void* data) {
             s->data = (char*) realloc(s->data, s->element_size * s->data_size);
         }
     }
-    memcpy(s->data + idx * s->element_size, data, s->element_size);
+    if(data != NULL) {
+        memcpy(s->data + idx * s->element_size, data, s->element_size);
+    }
     mutex_unlock(&s->mutex);
     return idx;
 }

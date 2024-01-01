@@ -16,37 +16,22 @@
         return r;
     }
 
-    THREAD thread_current() {
-        return GetCurrentThread();
-    }
-    
-    gbool thread_equal(THREAD a, THREAD b) {
-        THREAD da, db;
-        if (!DuplicateHandle(
-            GetCurrentProcess(), a,
-            GetCurrentProcess(), &da,
-            0, FALSE, DUPLICATE_SAME_ACCESS
-        )) {
-            return 0;
-        }
-        if (!DuplicateHandle(
-            GetCurrentProcess(), b,
-            GetCurrentProcess(), &db,
-            0, FALSE, DUPLICATE_SAME_ACCESS
-        )) {
-            CloseHandle(da);
-            return 0;
-        }
-        gbool r = da == db;
-        CloseHandle(da);
-        CloseHandle(db);
-        return r;
-    }
-
     void thread_join(THREAD* other) {
         if(WaitForSingleObject(*other, INFINITE) != WAIT_OBJECT_0) {
             gera___panic("Unable to join threads!");
         }
+    }
+
+    THREAD_IDENTIFIER thread_get_identifier(THREAD* t) {
+        return GetThreadId(*t);
+    }
+
+    THREAD_IDENTIFIER thread_current_identifier() {
+        return GetCurrentThreadId();
+    }
+    
+    gbool thread_identifiers_equal(THREAD_IDENTIFIER a, THREAD_IDENTIFIER b) {
+        return a == b;
     }
 
     MUTEX mutex_create() {
@@ -83,7 +68,7 @@
         if(SleepConditionVariableCS(&c->cond, &c->mutex, INFINITE) == 0) {
             gera___panic("Unable to wait for condition variable!");
         }
-        mutex_free(&c->mutex);
+        mutex_unlock(&c->mutex);
     }
 
     void cond_var_notify(COND_VAR* c) {
@@ -106,11 +91,15 @@
         return r;
     }
 
-    THREAD thread_current() {
-        return pthread_self();
+    THREAD_IDENTIFIER thread_get_identifier(THREAD* t) {
+        return *t;
     }
 
-    gbool thread_equal(THREAD a, THREAD b) {
+    THREAD_IDENTIFIER thread_current_identifier() {
+        return pthread_self();
+    }
+    
+    gbool thread_identifiers_equal(THREAD_IDENTIFIER a, THREAD_IDENTIFIER b) {
         return pthread_equal(a, b);
     }
 
@@ -148,7 +137,8 @@
     }
 
     void mutex_free(MUTEX* m) {
-        if(pthread_mutex_destroy(m) != 0) {
+        int status = pthread_mutex_destroy(m);
+        if(status != 0) {
             gera___panic("Unable to destroy a mutex!");
         }
     }
@@ -167,6 +157,7 @@
         if(pthread_cond_wait(&c->cond, &c->mutex) != 0) {
             gera___panic("Unable to wait for condition variable!");
         }
+        mutex_unlock(&c->mutex);
     }
 
     void cond_var_notify(COND_VAR* c) {
@@ -257,13 +248,15 @@ ThreadHandle gera_std_conc_spawn(ThreadTask task) {
 
 void gera_std_conc_wait() {
     init_thread_storage();
-    THREAD this_thread = thread_current();
+    THREAD_IDENTIFIER this_thread = thread_current_identifier();
     ThreadEntry* this_thread_entry;
     char found_entry = 0;
     storage_lock(&THREAD_STORAGE);
     for(size_t id = 0; id < THREAD_STORAGE.data_length; id += 1) {
         ThreadEntry* searched_thread = storage_get(&THREAD_STORAGE, id);
-        if(!thread_equal(searched_thread->thread, this_thread)) {
+        if(!thread_identifiers_equal(
+            thread_get_identifier(&searched_thread->thread), this_thread
+        )) {
             continue;
         }
         this_thread_entry = searched_thread;
@@ -333,7 +326,7 @@ typedef GERA_CLOSURE_NOARGS(gint) MutexHandle;
 typedef struct MutexEntry {
     MUTEX mutex;
     MUTEX data_mutex;
-    THREAD owner;
+    THREAD_IDENTIFIER owner;
     char has_owner;
     GeraAllocation* handle_allocation;
 } MutexEntry;
@@ -388,7 +381,11 @@ gbool gera_std_conc_try_lock(MutexHandle mutex_handle) {
         gera___panic("The provided mutex handle is invalid!");
     }
     mutex_lock(&mutex_entry->data_mutex);
-    if(mutex_entry->has_owner && thread_equal(mutex_entry->owner, thread_current())) {
+    if(mutex_entry->has_owner
+        && thread_identifiers_equal(
+            mutex_entry->owner, thread_current_identifier()
+        )
+    ) {
         gera___panic("The mutex is already owned by this thread!");
     }
     mutex_unlock(&mutex_entry->data_mutex);
@@ -396,7 +393,7 @@ gbool gera_std_conc_try_lock(MutexHandle mutex_handle) {
     if(entered) {
         mutex_lock(&mutex_entry->data_mutex);
         mutex_entry->has_owner = 1;
-        mutex_entry->owner = thread_current();
+        mutex_entry->owner = thread_current_identifier();
         mutex_unlock(&mutex_entry->data_mutex);
     }
     return entered;
@@ -414,14 +411,18 @@ void gera_std_conc_lock(MutexHandle mutex_handle) {
         gera___panic("The provided mutex handle is invalid!");
     }
     mutex_lock(&mutex_entry->data_mutex);
-    if(mutex_entry->has_owner && thread_equal(mutex_entry->owner, thread_current())) {
+    if(mutex_entry->has_owner
+        && thread_identifiers_equal(
+            mutex_entry->owner, thread_current_identifier()
+        )
+    ) {
         gera___panic("The mutex is already owned by this thread!");
     }
     mutex_unlock(&mutex_entry->data_mutex);
     mutex_lock(&mutex_entry->mutex);
     mutex_lock(&mutex_entry->data_mutex);
     mutex_entry->has_owner = 1;
-    mutex_entry->owner = thread_current();
+    mutex_entry->owner = thread_current_identifier();
     mutex_unlock(&mutex_entry->data_mutex);
 }
 
@@ -454,7 +455,11 @@ void gera_std_conc_unlock(MutexHandle mutex_handle) {
         gera___panic("The provided mutex handle is invalid!");
     }
     mutex_lock(&mutex_entry->data_mutex);
-    if(!mutex_entry->has_owner || !thread_equal(mutex_entry->owner, thread_current())) {
+    if(!mutex_entry->has_owner
+        || !thread_identifiers_equal(
+            mutex_entry->owner, thread_current_identifier()
+        )
+    ) {
         gera___panic("The mutex is not currently owned by this thread!");
     }
     mutex_unlock(&mutex_entry->mutex);

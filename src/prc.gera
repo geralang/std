@@ -23,6 +23,16 @@ target c {
             return self
         },
 
+        await_output = |self| {
+            internal_await_stdout(self.handle)
+            return self
+        },
+
+        await_eoutput = |self| {
+            internal_await_stderr(self.handle)
+            return self
+        },
+
         output = |self| {
             return internal_read_stdout(self.handle)
         },

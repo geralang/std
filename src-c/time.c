@@ -4,12 +4,7 @@
 #ifdef _WIN32
     #include <windows.h>
 
-    static const gint windows_to_unix_epoch = (gint) (1601 - 1970)
-        * 365.25
-        * 24
-        * 60
-        * 60
-        * 1e7;
+    #define WINDOWS_TO_UNIX_EPOCH -11644473600000
 
     gint std_time_utc_unix_millis() {
         FILETIME ft;
@@ -17,7 +12,7 @@
         ULARGE_INTEGER uli;
         uli.LowPart = ft.dwLowDateTime;
         uli.HighPart = ft.dwHighDateTime;
-        return (uli.QuadPart + windows_to_unix_epoch) / 10000;
+        return (uli.QuadPart / 10000) + WINDOWS_TO_UNIX_EPOCH;
     }
 
     gint std_time_local_unix_millis() {
@@ -28,7 +23,7 @@
         ULARGE_INTEGER uli;
         uli.LowPart = ft.dwLowDateTime;
         uli.HighPart = ft.dwHighDateTime;
-        return (uli.QuadPart + windows_to_unix_epoch) / 10000;
+        return (uli.QuadPart / 10000) + WINDOWS_TO_UNIX_EPOCH;
     }
 #else
     #include <sys/time.h>
