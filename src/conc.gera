@@ -37,14 +37,14 @@ target c {
         },
 
         try_lock = |self| {
-            self:init_handle()
+            self .> init_handle()
             return self.handle
                 |> opt::expect("handle should exist at this point")
                 |> internal_try_lock()
         },
 
         lock = |self| {
-            self:init_handle()
+            self .> init_handle()
             self.handle
                 |> opt::expect("handle should exist at this point")
                 |> internal_lock()
@@ -58,7 +58,7 @@ target c {
         },
 
         unlock = |self| {
-            self:init_handle()
+            self .> init_handle()
             return self.handle
                 |> opt::expect("handle should exist at this point")
                 |> internal_unlock()

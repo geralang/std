@@ -71,7 +71,7 @@ pub proc iter(a) {
 
 pub proc collect(i) {
     var dest = vec::Vector()
-    i |> iter::for_each(|e| dest:push(e))
+    i |> iter::for_each(|e| dest .> push(e))
     return dest.content
         |> subarray_until(dest.size)
 }

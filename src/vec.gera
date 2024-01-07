@@ -19,9 +19,9 @@ pub proc Vector() { return {
     push = |self, item| {
         var new_size = self.size + 1
         case length(self.content) == 0
-            -> self:grow(item, 16)
+            -> self .> grow(item, 16)
         else case new_size > length(self.content)
-            -> self:grow(item, length(self.content) * 2)
+            -> self .> grow(item, length(self.content) * 2)
         self.content[self.size] = item
         self.size = new_size
         return self
@@ -31,7 +31,7 @@ pub proc Vector() { return {
         case length(appended_array) == 0 -> return self
         var new_size = self.size + length(appended_array)
         case new_size > length(self.content)
-            -> self:grow(appended_array[0], new_size)
+            -> self .> grow(appended_array[0], new_size)
         0..length(appended_array) |> iter::for_each(|i| {
             self.content[self.size + i] = appended_array[i]
         })
@@ -43,7 +43,7 @@ pub proc Vector() { return {
         case appended_vector.size == 0 -> return self
         var new_size = self.size + appended_vector.size
         case new_size > length(self.content)
-            -> self:grow(appended_vector.content[0], new_size)
+            -> self .> grow(appended_vector.content[0], new_size)
         0..appended_vector.size |> iter::for_each(|i| {
             self.content[self.size + i] = appended_vector.content[i]
         })
@@ -54,7 +54,7 @@ pub proc Vector() { return {
     insert = |self, index, item| {
         var new_size = self.size + 1
         case new_size > length(self.content)
-            -> self:grow(item, length(self.content) * 2)
+            -> self .> grow(item, length(self.content) * 2)
         mut var idx = index
         case index < 0 -> idx = index + self.size
         case idx > self.size -> "the insertion index _ is \
@@ -145,6 +145,6 @@ pub proc Vector() { return {
 
 pub proc collect(from_iter) {
     var dest = Vector()
-    from_iter |> iter::for_each(|item| dest:push(item))
+    from_iter |> iter::for_each(|item| dest .> push(item))
     return dest 
 }

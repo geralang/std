@@ -22,7 +22,7 @@ pub proc Generator(seed) { return {
     },
 
     next_flt = |self| {
-        return as_flt(self:next_int() |> math::abs())
+        return as_flt(self .> next_int() |> math::abs())
             / as_flt(math::INT_MAX)
     },
 
@@ -32,7 +32,7 @@ pub proc Generator(seed) { return {
                 |> str::fmt([min |> as_str(), max |> as_str()])
                 |> panic()
         var range = max - min + 1
-        var r = self:next_int() |> math::abs()
+        var r = self .> next_int() |> math::abs()
         case range <= 0 -> return r // this can only happen if the range is too big
         return min + r % range
     },
@@ -43,7 +43,7 @@ pub proc Generator(seed) { return {
                 |> str::fmt([min |> as_str(), max |> as_str()])
                 |> panic()
         var range = max - min
-        var r = self:next_flt()
+        var r = self .> next_flt()
         return min + r * range
     }
 } }
