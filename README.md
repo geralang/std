@@ -1,11 +1,17 @@
-# Gera Standard Library
+<img src="logo.png" height="200" align="left"/>
 
-This is the repository for the standard library of the Gera programming language.
+# `gerastd`
+*The standard library for the Gera programming language.*
+
+When using `gerap`, you may add this repository as a dependency (`gerap` does this by default when a new project is created)
+
+### Links
 
 - [Gera compiler repository](https://github.com/typesafeschwalbe/gerac)
 - [Package manager](https://github.com/typesafeschwalbe/gerap)
 - [VS Code extension](https://github.com/typesafeschwalbe/vscode-gera)
 - [C target core dependencies](https://github.com/typesafeschwalbe/geraccoredeps)
+
 ### Progress
 
 - [x] `std::arr` - Array utilities
