@@ -1,16 +1,11 @@
 <img src="logo.png" height="200" align="left"/>
 
-# `gerastd`
-*The standard library for the Gera programming language.*
+# `std`
+*The standard library for [the Gera programming language](https://github.com/geralang).*
 
 When using `gerap`, you may add this repository as a dependency (`gerap` does this by default when a new project is created)
 
-### Links
-
-- [Gera compiler repository](https://github.com/typesafeschwalbe/gerac)
-- [Package manager](https://github.com/typesafeschwalbe/gerap)
-- [VS Code extension](https://github.com/typesafeschwalbe/vscode-gera)
-- [C target core dependencies](https://github.com/typesafeschwalbe/geraccoredeps)
+<br>
 
 ### Progress
 
@@ -29,5 +24,5 @@ When using `gerap`, you may add this repository as a dependency (`gerap` does th
 - [x] `std::time` - Time
 - [x] `std::rng` - Random number generation
 - [x] `std::sort` - Sorting
-- [ ] `std::prc` - Child processes
+- [x] `std::prc` - Child processes
 - [x] `std::conc` - Concurrency   
