@@ -1,33 +1,11 @@
 
-mod std::conc
+mod std::conc::Mutex
 
-use std::internal::conc::*
+use std::internal::conc::Mutex::*
 use std::opt
 
 target c {
-    pub proc Thread(task) { return {
-        handle = internal_spawn(task),
-
-        notify = |self| {
-            internal_notify(self.handle)
-            return self
-        },
-
-        join = |self| {
-            internal_join(self.handle)
-            return self
-        }
-    } }
-
-    pub proc wait() {
-        internal_wait()
-    }
-
-    pub proc sleep(time) {
-        return internal_sleep(time)
-    }
-
-    pub proc Mutex() { return {
+    pub proc new() { return {
         handle = #none unit,
 
         init_handle = |self| {

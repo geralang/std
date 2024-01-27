@@ -1,16 +1,11 @@
 
-mod prc
+mod std::prc::Process
 
-use std::internal::prc::*
+use std::internal::prc::Process::*
 use std::opt
 
 target c {
-    pub proc exit(code) {
-        internal_exit(code)
-        return panic("Exited!")
-    }
-
-    pub proc Process(program, arguments) { return {
+    pub proc new(program, arguments) { return {
         handle = internal_run(program, arguments),
 
         kill = |self| {
@@ -62,4 +57,9 @@ target c {
             return status.is_finished
         }
     } }
+
+    pub proc exit(code) {
+        internal_exit(code)
+        return panic("called 'std::prc::Process::exit'")
+    }
 }

@@ -1,0 +1,8 @@
+
+type MutexHandle = || -> int
+
+proc std::internal::conc::Mutex::internal_mutex() -> MutexHandle = gera_std_conc_mutex
+proc std::internal::conc::Mutex::internal_try_lock(MutexHandle) -> bool = gera_std_conc_try_lock
+proc std::internal::conc::Mutex::internal_lock(MutexHandle) = gera_std_conc_lock
+proc std::internal::conc::Mutex::internal_is_locked(MutexHandle) -> bool = gera_std_conc_is_locked
+proc std::internal::conc::Mutex::internal_unlock(MutexHandle) = gera_std_conc_unlock

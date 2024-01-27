@@ -1,7 +1,8 @@
 
 mod std::arr
 
-use std::(str, iter, vec, opt, sort)
+use std::(str, iter, opt, sort)
+use std::coll::Vector
 
 pub proc subarray(a, start, end) {
     mut var start_index = start
@@ -70,7 +71,7 @@ pub proc iter(a) {
 }
 
 pub proc collect(i) {
-    var dest = vec::Vector()
+    var dest = Vector::new()
     i |> iter::for_each(|e| dest .> push(e))
     return dest.content
         |> subarray_until(dest.size)

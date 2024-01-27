@@ -1,9 +1,9 @@
 
-mod std::vec
+mod std::coll::Vector
 
 use std::(iter, str, arr, sort)
 
-pub proc Vector() { return {
+pub proc new() { return {
     content = [],
     size = 0,
 
@@ -110,7 +110,7 @@ pub proc Vector() { return {
     },
 
     clone = |self| {
-        var cloned = Vector()
+        var cloned = new()
         cloned.content = self.content |> arr::clone()
         cloned.size = self.size
         return cloned
@@ -144,7 +144,7 @@ pub proc Vector() { return {
 } }
 
 pub proc collect(from_iter) {
-    var dest = Vector()
+    var dest = new()
     from_iter |> iter::for_each(|item| dest .> push(item))
     return dest 
 }

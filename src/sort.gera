@@ -1,7 +1,8 @@
 
 mod std::sort
 
-use std::(rng, iter, opt)
+use std::(iter, opt)
+use std::rng::Random
 
 pub proc ascending(f) {
     return |a, b| f(a) - f(b)
@@ -19,7 +20,7 @@ pub proc quicksort(array, start, end, comp) {
         left = start,
         right = end - 1
     }
-    var pivot = array[rng::rand_int_in(current.left, current.right)]
+    var pivot = array[Random::int_in(current.left, current.right)]
     exhaust(|| {
         current.left = current.left..=current.right
             |> iter::find(|l| comp(array[l], pivot) >= zero)

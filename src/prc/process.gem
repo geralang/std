@@ -1,0 +1,18 @@
+
+proc std::internal::prc::Process::internal_exit(int) = gera_std_prc_exit
+
+type ProcessHandle = || -> int
+
+proc std::internal::prc::Process::internal_run(str, [str]) -> ProcessHandle = gera_std_prc_run
+proc std::internal::prc::Process::internal_kill(ProcessHandle) = gera_std_prc_kill
+proc std::internal::prc::Process::internal_await(ProcessHandle) = gera_std_prc_await
+proc std::internal::prc::Process::internal_await_stdout(ProcessHandle) = gera_std_prc_await_stdout
+proc std::internal::prc::Process::internal_await_stderr(ProcessHandle) = gera_std_prc_await_stderr
+proc std::internal::prc::Process::internal_read_stdout(ProcessHandle) -> str = gera_std_prc_read_stdout
+proc std::internal::prc::Process::internal_read_stderr(ProcessHandle) -> str = gera_std_prc_read_stderr
+proc std::internal::prc::Process::internal_write_stdin(ProcessHandle, str) = gera_std_prc_write_stdin
+type ProcessStatus = {
+    is_finished = bool,
+    exit_code = int
+}
+proc std::internal::prc::Process::internal_status(ProcessHandle) -> ProcessStatus = gera_std_prc_status
