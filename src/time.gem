@@ -1,3 +1,0 @@
-
-proc std::internal::time::internal_utc_unix_millis() -> int = std_time_utc_unix_millis
-proc std::internal::time::internal_local_unix_millis() -> int = std_time_local_unix_millis
