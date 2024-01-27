@@ -1,0 +1,97 @@
+
+mod std::io
+
+use core::*   // don't ask me why this is needed?
+use std::internal::io::*
+use std::res
+
+pub proc println(thing) {
+    thing |> as_str() |> internal_println()
+}
+
+pub proc eprintln(thing) {
+    thing |> as_str() |> internal_eprintln()
+}
+
+target c {
+    pub proc print(thing) {
+        thing |> as_str() |> internal_print()
+    }
+
+    pub proc eprint(thing) {
+        thing |> as_str() |> internal_eprint()
+    }
+
+    proc ioresult_as_result(value) {
+        case value.has_error -> return #err value.error
+        return #ok value.value
+    }
+
+    proc ioresult_as_empty_result(value) {
+        case value.has_error -> return #err value.error
+        return #ok unit
+    }
+
+    pub proc set_cwd(path) {
+        return internal_set_cwd(path)
+            |> ioresult_as_empty_result()
+    }
+
+    pub proc get_cwd() {
+        return "."
+            |> canonicalize()
+            |> res::unwrap_or_else(|e|
+                panic("Unable to get the current working directory!")
+            )
+    }
+
+
+    pub proc file_exists(path) {
+        return internal_file_exists(path)
+    }
+
+    pub proc canonicalize(path) {
+        return internal_canonicalize(path)
+            |> ioresult_as_result()
+    }
+
+
+    pub proc is_dir(path) {
+        return internal_is_dir(path)
+    }
+
+    pub proc create_dir(path) {
+        return internal_create_dir(path)
+            |> ioresult_as_empty_result()
+    }
+
+    pub proc read_dir(path) {
+        return internal_read_dir(path)
+            |> ioresult_as_result()
+    }
+
+    pub proc delete_dir(path) {
+        return internal_delete_dir(path)
+            |> ioresult_as_empty_result()
+    }
+
+
+    pub proc is_file(path) {
+        return internal_is_file(path)
+    }
+
+    pub proc write_file(content, path) {
+        return internal_write_file(content, path)
+            |> ioresult_as_empty_result()
+    }
+
+    pub proc read_file(path) {
+        return internal_read_file(path)
+            |> ioresult_as_result()
+    }
+
+    pub proc delete_file(path) {
+        return internal_delete_file(path)
+            |> ioresult_as_empty_result()
+    }
+}

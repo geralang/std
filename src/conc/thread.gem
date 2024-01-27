@@ -1,0 +1,8 @@
+
+type ThreadHandle = || -> int
+
+proc std::internal::conc::Thread::internal_spawn(|| -> unit) -> ThreadHandle = gera_std_conc_spawn
+proc std::internal::conc::Thread::internal_wait() = gera_std_conc_wait
+proc std::internal::conc::Thread::internal_notify(ThreadHandle) = gera_std_conc_notify
+proc std::internal::conc::Thread::internal_join(ThreadHandle) = gera_std_conc_join
+proc std::internal::conc::Thread::internal_sleep(int) = gera_std_conc_sleep

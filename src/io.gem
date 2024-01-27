@@ -1,0 +1,29 @@
+
+proc std::internal::io::internal_println(str) = gera_std_io_println
+proc std::internal::io::internal_eprintln(str) = gera_std_io_eprintln
+proc std::internal::io::internal_print(str) = gera_std_io_print
+proc std::internal::io::internal_eprint(str) = gera_std_io_eprint
+proc std::io::inputln() -> str = gera_std_io_inputln
+
+proc std::io::file_sep() -> str = gera_std_io_file_sep
+proc std::io::path_sep() -> str = gera_std_io_path_sep
+
+type IoEmptyResult = { has_error = bool, error = str }
+type IoStringResult = { has_error = bool, error = str, value = str }
+type IoBoolResult = { has_error = bool, error = str, value = bool }
+type IoStringArrResult = { has_error = bool, error = str, value = [str] }
+
+proc std::internal::io::internal_set_cwd(str) -> IoEmptyResult = gera_std_io_set_cwd
+
+proc std::internal::io::internal_file_exists(str) -> bool = gera_std_io_file_exists
+proc std::internal::io::internal_canonicalize(str) -> IoStringResult = gera_std_io_canonicalize
+
+proc std::internal::io::internal_is_dir(str) -> bool = gera_std_io_is_dir
+proc std::internal::io::internal_create_dir(str) -> IoEmptyResult = gera_std_io_create_dir
+proc std::internal::io::internal_read_dir(str) -> IoStringArrResult = gera_std_io_read_dir
+proc std::internal::io::internal_delete_dir(str) -> IoEmptyResult = gera_std_io_delete_dir
+
+proc std::internal::io::internal_is_file(str) -> bool = gera_std_io_is_file
+proc std::internal::io::internal_write_file(str, str) -> IoEmptyResult = gera_std_io_write_file
+proc std::internal::io::internal_read_file(str) -> IoStringResult = gera_std_io_read_file
+proc std::internal::io::internal_delete_file(str) -> IoEmptyResult = gera_std_io_delete_file

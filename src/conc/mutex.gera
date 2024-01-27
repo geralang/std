@@ -1,0 +1,45 @@
+
+mod std::conc::Mutex
+
+use std::internal::conc::Mutex::*
+use std::opt
+
+target c {
+    pub proc new() { return {
+        handle = #none unit,
+
+        init_handle = |self| {
+            case self.handle |> opt::is_none() -> {
+                self.handle = #some internal_mutex()
+            }
+        },
+
+        try_lock = |self| {
+            self .> init_handle()
+            return self.handle
+                |> opt::expect("handle should exist at this point")
+                |> internal_try_lock()
+        },
+
+        lock = |self| {
+            self .> init_handle()
+            self.handle
+                |> opt::expect("handle should exist at this point")
+                |> internal_lock()
+            return self
+        },
+
+        is_locked = |self| {
+            return self.handle
+                |> opt::map(internal_is_locked)
+                |> opt::unwrap_or(false)
+        },
+
+        unlock = |self| {
+            self .> init_handle()
+            return self.handle
+                |> opt::expect("handle should exist at this point")
+                |> internal_unlock()
+        }
+    } }
+}

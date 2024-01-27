@@ -1,0 +1,6 @@
+
+mod std::coll::HashMap
+
+pub proc new() { return {
+
+} }

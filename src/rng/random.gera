@@ -1,0 +1,101 @@
+
+mod std::rng::Random
+
+use std::(math, str, time, iter)
+
+var LCG_MULTIPLIER = 6364136223846793005
+var LCG_INCREMENT = 1442695040888963407
+
+pub proc new(seed) { return {
+    state = seed,
+
+    seed = |self, new_seed| {
+        self.state = new_seed
+        return self
+    },
+
+    int = |self| {
+        var r = self.state
+            * LCG_MULTIPLIER
+            + LCG_INCREMENT
+        self.state = r
+        return r
+    },
+
+    flt = |self| {
+        return as_flt(self .> int() |> math::abs())
+            / as_flt(math::INT_MAX)
+    },
+
+    int_in = |self, min, max| {
+        case min > max
+            -> "The minimum (_) is larger than the maximum (_)!"
+                |> str::fmt([min |> as_str(), max |> as_str()])
+                |> panic()
+        var range = max - min + 1
+        var r = self .> int() |> math::abs()
+        case range <= 0 -> return r // this can only happen if the range is too big
+        return min + r % range
+    },
+
+    flt_in = |self, min, max| {
+        case min > max
+            -> "The minimum (_) is larger than the maximum (_)!"
+                |> str::fmt([min |> as_str(), max |> as_str()])
+                |> panic()
+        var range = max - min
+        var r = self .> flt()
+        return min + r * range
+    },
+
+    choice = |self, src| {
+        case length(src) == 0 -> panic("Source array is empty!")
+        var item = src[self .> int_in(0, length(src) - 1)]
+        return item
+    },
+
+    sample = |self, src| {
+        case length(src) == 0 -> panic("Source array is empty!")
+        return iter::repeat_over(|| src[self .> int_in(0, length(src) - 1)])
+    }
+} }
+
+var GLOBAL_GEN = new(0)
+var GLOBAL_GEN_INFO = { seeded = false }
+
+proc init_global_gen() {
+    case !GLOBAL_GEN_INFO.seeded -> {
+        GLOBAL_GEN .> seed(time::now_local())
+        GLOBAL_GEN_INFO.seeded = true
+    }
+}
+
+pub proc int() {
+    init_global_gen()
+    return GLOBAL_GEN .> int()
+}
+
+pub proc flt() {
+    init_global_gen()
+    return GLOBAL_GEN .> flt()
+}
+
+pub proc int_in(min, max) {
+    init_global_gen()
+    return GLOBAL_GEN .> int_in(min, max)
+}
+
+pub proc flt_in(min, max) {
+    init_global_gen()
+    return GLOBAL_GEN .> flt_in(min, max)
+}
+
+pub proc choice(array) {
+    init_global_gen()
+    return GLOBAL_GEN .> choice(array)
+}
+
+pub proc sample(array) {
+    init_global_gen()
+    return GLOBAL_GEN .> sample(array)
+}
