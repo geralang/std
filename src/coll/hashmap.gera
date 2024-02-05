@@ -1,6 +1,110 @@
 
 mod std::coll::HashMap
 
+use std::(iter, math, opt)
+
+proc choose_bucket(key_hash, capacity) {
+    return math::abs(key_hash % capacity)
+}
+
+proc iter_nodes(start_node) {
+    mut var current_node = start_node
+    return || {
+        case current_node {
+            #none -> return #end unit
+            #some node -> {
+                current_node = node.next
+                return #next node
+            }
+        }
+    }
+}
+
+var INITIAL_SIZE = 16
+
 pub proc new() { return {
+    hasher = |v| hash(v),
+    buckets = array(#none unit, INITIAL_SIZE),
+    load_factor = 0.75,
+    size = INITIAL_SIZE,
+
+    grow = |self, capacity| {
+        case length(self.buckets) >= capacity -> return self
+        var old_values = self .> iter()
+        self.buckets = array(#none unit, capacity)
+        old_values |> iter::for_each(|v|
+            self .> set(v.key, v.value)
+        )
+        return self
+    },
+
+    set = |self, key, value| {
+        var key_hash = key |> self.hasher()
+        var bucket_idx = key_hash |> choose_bucket(length(self.buckets))
+        case self.buckets[bucket_idx]
+            |> iter_nodes()
+            |> iter::find(|node| node.key_hash == key_hash) {
+            #some node -> {
+                node.key = key
+                node.value = value
+            }
+            #none -> {
+                var first_node = self.buckets[bucket_idx]
+                self.buckets[bucket_idx] = #some {
+                    key_hash = key_hash,
+                    key = key,
+                    value = value,
+                    next = first_node
+                }
+                self.size = self.size + 1
+                var max_size = as_flt(length(self.buckets)) * self.load_factor
+                    |> as_int()
+                case self.size > max_size
+                    -> self .> grow(length(self.buckets) * 2)
+            }
+        }
+        return self
+    },
+
+    at = |self, key| {
+        var key_hash = key |> self.hasher()
+        var bucket_idx = key_hash |> choose_bucket(length(self.buckets))
+        return self.buckets[bucket_idx]
+            |> iter_nodes()
+            |> iter::find(|node| node.key_hash == key_hash)
+            |> opt::map(|node| node.value)
+    },
+
+    iter = |self| {
+        var buckets = self.buckets
+        mut var bucket_idx = 0
+        mut var current_node = #none unit
+        return || {
+            var node
+            case current_node {
+                #none -> {
+                    bucket_idx = (bucket_idx + 1)..length(buckets)
+                        |> iter::find(|i| buckets[i] |> opt::is_some())
+                        |> opt::unwrap_or(length(buckets))
+                    case bucket_idx >= length(buckets)
+                        -> return #end unit
+                    node = buckets[bucket_idx]
+                        |> opt::expect("Just checked above!")
+                }
+                #some n -> node = n
+            }
+            var entry = { key = node.key, value = node.value }
+            current_node = node.next
+            return #next entry
+        }
+    },
+
+    iter_keys = |self| self
+        .> iter()
+        |> iter::map(|v| v.key),
+
+    iter_values = |self| self
+        .> iter()
+        |> iter::map(|v| v.value)
 
 } }
