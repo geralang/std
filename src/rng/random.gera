@@ -60,42 +60,42 @@ pub proc new(seed) { return {
     }
 } }
 
-var GLOBAL_GEN = new(0)
-var GLOBAL_GEN_INFO = { seeded = false }
+// var GLOBAL_GEN = new(0)
+// var GLOBAL_GEN_INFO = { seeded = false }
 
-proc init_global_gen() {
-    case !GLOBAL_GEN_INFO.seeded -> {
-        GLOBAL_GEN .> seed(time::now_local())
-        GLOBAL_GEN_INFO.seeded = true
-    }
-}
+// proc init_global_gen() {
+//     case !GLOBAL_GEN_INFO.seeded -> {
+//         GLOBAL_GEN .> seed(time::now_local())
+//         GLOBAL_GEN_INFO.seeded = true
+//     }
+// }
 
-pub proc int() {
-    init_global_gen()
-    return GLOBAL_GEN .> int()
-}
+// pub proc int() {
+//     init_global_gen()
+//     return GLOBAL_GEN .> int()
+// }
 
-pub proc flt() {
-    init_global_gen()
-    return GLOBAL_GEN .> flt()
-}
+// pub proc flt() {
+//     init_global_gen()
+//     return GLOBAL_GEN .> flt()
+// }
 
-pub proc int_in(min, max) {
-    init_global_gen()
-    return GLOBAL_GEN .> int_in(min, max)
-}
+// pub proc int_in(min, max) {
+//     init_global_gen()
+//     return GLOBAL_GEN .> int_in(min, max)
+// }
 
-pub proc flt_in(min, max) {
-    init_global_gen()
-    return GLOBAL_GEN .> flt_in(min, max)
-}
+// pub proc flt_in(min, max) {
+//     init_global_gen()
+//     return GLOBAL_GEN .> flt_in(min, max)
+// }
 
-pub proc choice(array) {
-    init_global_gen()
-    return GLOBAL_GEN .> choice(array)
-}
+// pub proc choice(array) {
+//     init_global_gen()
+//     return GLOBAL_GEN .> choice(array)
+// }
 
-pub proc sample(array) {
-    init_global_gen()
-    return GLOBAL_GEN .> sample(array)
-}
+// pub proc sample(array) {
+//     init_global_gen()
+//     return GLOBAL_GEN .> sample(array)
+// }
