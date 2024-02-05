@@ -20,7 +20,7 @@ pub proc quicksort(array, start, end, comp) {
         left = start,
         right = end - 1
     }
-    var pivot = array[Random::int_in(current.left, current.right)]
+    var pivot = array[current.left]//array[Random::int_in(current.left, current.right)]
     exhaust(|| {
         current.left = current.left..=current.right
             |> iter::find(|l| comp(array[l], pivot) >= zero)
