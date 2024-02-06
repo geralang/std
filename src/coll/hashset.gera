@@ -1,6 +1,0 @@
-
-mod std::coll::HashSet
-
-pub proc new() { return {
-    
-} }
