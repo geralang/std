@@ -109,12 +109,9 @@ pub proc new() { return {
         return self
     },
 
-    // clone = |self| {
-    //     var cloned = new()
-    //     cloned.content = self.content |> arr::clone()
-    //     cloned.size = self.size
-    //     return cloned
-    // },
+    // clone = |self| self
+    //     .> iter()
+    //     |> Vector::collect(),
 
     reverse = |self| {
         0..(self.size / 2) |> iter::for_each(|o| {
@@ -143,8 +140,8 @@ pub proc new() { return {
     }
 } }
 
-// pub proc collect(from_iter) {
-//     var dest = new()
-//     from_iter |> iter::for_each(|item| dest .> push(item))
-//     return dest 
-// }
+pub proc collect(from_iter) {
+    var dest = new()
+    from_iter |> iter::for_each(|item| dest .> push(item))
+    return dest 
+}
