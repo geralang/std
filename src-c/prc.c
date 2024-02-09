@@ -391,6 +391,16 @@ gint process_handle_get(GeraAllocation* captures) {
     }
 
     ProcessHandle gera_std_prc_run(GeraString program, GeraArray args) {
+        GERA_STRING_NULL_TERM(program, program_nt);
+        GeraString* args_gs = (GeraString*) args.data;
+        char* args_nt[args.length + 2];
+        args_nt[0] = program_nt;
+        for(size_t ai = 0; ai < args.length; ai += 1) {
+            char* arg_nt = malloc(args_gs[ai].length_bytes + 1);
+            memcpy(arg_nt, args_gs[ai].data, args_gs[ai].length_bytes);
+            arg_nt[args_gs[ai].length_bytes] = '\0';
+            args_nt[ai + 1] = arg_nt;
+        }
         int stdout_pipe[2];
         int stderr_pipe[2];
         int stdin_pipe[2];
@@ -411,23 +421,13 @@ gint process_handle_get(GeraAllocation* captures) {
         }
         if(child_os_id == 0) {
             // child process continues executing here
+            args_nt[args.length + 1] = NULL;
             close(stdout_pipe[0]); // doesn't read
             dup2(stdout_pipe[1], STDOUT_FILENO); // redirect stdout to write
             close(stderr_pipe[0]); // doesn't read
             dup2(stderr_pipe[1], STDERR_FILENO); // redirect stderr to write
             close(stdin_pipe[1]); // doesn't write
             dup2(stdin_pipe[0], STDIN_FILENO); // redirect read to stdin
-            GERA_STRING_NULL_TERM(program, program_nt);
-            GeraString* args_gs = (GeraString*) args.data;
-            char* args_nt[args.length + 2];
-            args_nt[0] = program_nt;
-            for(size_t ai = 0; ai < args.length; ai += 1) {
-                char* arg_nt = malloc(args_gs[ai].length_bytes + 1);
-                memcpy(arg_nt, args_gs[ai].data, args_gs[ai].length_bytes);
-                arg_nt[args_gs[ai].length_bytes] = '\0';
-                args_nt[ai + 1] = arg_nt;
-            }
-            args_nt[args.length + 1] = NULL;
             execvp(program_nt, args_nt);
             for(size_t ai = 0; ai < args.length; ai += 1) {
                 free(args_nt[ai + 1]);

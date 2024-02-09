@@ -36,15 +36,15 @@ pub proc subarray_after(a, start_index) {
     return a |> subarray(start_index, a |> length())
 }
 
-pub proc concat(a, other_array) {
-    case length(a) == 0 -> return other_array
-    var r = array(a[0], length(a) + length(other_array))
+pub proc concat(a, b) {
+    case length(a) == 0 -> return b
+    case length(b) == 0 -> return a
+    var r = array(a[0], length(a) + length(b))
     0..length(a) |> iter::for_each(|i| {
         r[i] = a[i]
     })
-    var other_offset = length(a)
-    0..length(other_array) |> iter::for_each(|i| {
-        r[i + other_offset] = other_array[i]
+    0..length(b) |> iter::for_each(|i| {
+        r[i + length(a)] = b[i]
     })
     return r
 }
