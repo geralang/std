@@ -26,11 +26,11 @@ pub proc new() {
     return with_capacity(INITIAL_SIZE)
 }
 
-pub proc with_capacity(initial_capacity) { return {
+proc with_capacity(initial_capacity) { return {
     hasher = |v| hash(v),
     buckets = array(#none unit, initial_capacity),
     load_factor = 0.75,
-    size = initial_capacity,
+    size = 0,
 
     grow = |self, capacity| {
         case length(self.buckets) >= capacity -> return self

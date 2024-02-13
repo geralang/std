@@ -70,8 +70,9 @@ pub proc new() { return {
     },
 
     pop = |self| {
+        case self.size == 0 -> return #none unit
         self.size = self.size - 1
-        return self
+        return #some self.content[self.size]
     },
 
     remove = |self, index| {
@@ -81,11 +82,12 @@ pub proc new() { return {
     out of bounds for a self of length _"
             |> str::fmt([idx |> as_str(), self.size |> as_str()])
             |> panic()
+        var removed = self.content[idx]
         self.size = self.size - 1
         idx..self.size |> iter::for_each(|i| {
             self.content[i] = self.content[i + 1]
         })
-        return self
+        return removed
     },
 
     at = |self, index| {
@@ -111,7 +113,7 @@ pub proc new() { return {
 
     // clone = |self| self
     //     .> iter()
-    //     |> Vector::collect(),
+    //     |> collect(),
 
     reverse = |self| {
         0..(self.size / 2) |> iter::for_each(|o| {
