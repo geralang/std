@@ -118,15 +118,6 @@ pub proc last(iter) {
     return result.value
 }
 
-pub proc from_value(value) {
-    mut var done = false
-    return || {
-        case done -> return #end unit
-        done = true
-        return #next value
-    }
-}
-
 pub proc find(iter, condition) {
     return iter |> filter(condition) |> next()
 }
