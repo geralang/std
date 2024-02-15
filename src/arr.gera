@@ -79,6 +79,6 @@ pub proc collect(i) {
 
 pub proc sorted(a, comp) {
     var ac = a |> clone()
-    sort::quicksort(ac, 0, length(ac), comp)
+    sort::quicksort(ac, 0, length(ac) - 1, comp)
     return ac
 }

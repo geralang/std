@@ -14,7 +14,7 @@ pub proc descending(f) {
 
 pub proc quicksort(array, start, end, comp) {
     case end - start <= 1 -> return unit
-    var some_comp_val = comp(array[start], array[end])
+    var some_comp_val = comp(array[start], array[end - 1])
     var zero = some_comp_val - some_comp_val
     var current = {
         left = start,
