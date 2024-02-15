@@ -97,8 +97,8 @@ pub proc and_then(result, f) {
 
 pub proc or(result, other) {
     case result {
-        #ok -> return other
-        #err -> return result
+        #ok -> return result
+        #err -> return other
     }
 }
 
