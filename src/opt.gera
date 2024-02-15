@@ -54,9 +54,6 @@ pub proc iter(optional) {
 pub proc flatten(optional) {
     case optional {
         #none -> return #none unit
-        #some nested_optional -> case nested_optional {
-            #none -> return #none unit
-            #some value -> return #some value
-        }
+        #some nested_optional -> return nested_optional
     }
 }
