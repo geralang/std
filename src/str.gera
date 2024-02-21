@@ -1,7 +1,7 @@
 
 mod std::str
 
-use std::(iter, opt, math)
+use std::(iter, opt, math, res)
 
 pub proc substring_until(s, end_index) {
     return s |> substring(0, end_index)
@@ -141,4 +141,62 @@ pub proc join(strings, separator) {
 pub proc iter(s) {
     return 0..length(s)
         |> iter::map(|i| s |> at(i))
+}
+
+proc parse_digit(c) {
+    var d
+    case c {
+        "0" -> d = 0  "1" -> d = 1  "2" -> d = 2
+        "3" -> d = 3  "4" -> d = 4  "5" -> d = 5
+        "6" -> d = 6  "7" -> d = 7  "8" -> d = 8
+        "9" -> d = 9
+    } else return #err unit
+    return #ok d
+}
+
+pub proc parse_int(source) {
+    case length(source) == 0 -> return #none unit
+    mut var start = 0
+    mut var sign = 1
+    case at(source, 0) == "-" -> {
+        case length(source) == 1 -> return #none unit
+        sign = -1
+        start = 1
+    }
+    return start..length(source)
+        |> iter::map(|i| source |> at(i))
+        |> iter::reduce(|r, c| r |> res::and_then(|v|
+            parse_digit(c)
+                |> res::map(|d| v * 10 + d)
+        ), #ok 0)
+        |> res::map(|r| #some r * sign)
+        |> res::unwrap_or(#none unit)
+}
+
+pub proc parse_flt(source) {
+    var dot
+    case source |> find(".") |> iter::next() {
+        #none -> return source
+            |> parse_int()
+            |> opt::map(as_flt)
+        #some d -> dot = d
+    }
+    var whole
+    case source |> substring_until(dot) |> parse_int() {
+        #none -> whole = 0.0
+        #some w -> whole = w |> as_flt()
+    }
+    return 1..(length(source) - dot)
+        |> iter::reduce(|r, i| r |> res::and_then(|v|
+            source
+                |> at(i + dot)
+                |> parse_digit()
+                |> res::map(|d| v
+                    + as_flt(d) * math::pow(10.0, -as_flt(i))
+                )
+        ), #ok 0.0)
+        |> res::map(|f| #some std::if_else(
+            whole >= 0.0, whole + f, whole - f
+        ))
+        |> res::unwrap_or(#none unit)
 }
