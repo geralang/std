@@ -119,7 +119,13 @@ gint process_handle_get(GeraAllocation* captures) {
             &si,
             &process_entry->pi
         )) {
-            gera___panic("Unable to create a child process!");
+            DWORD err = GetLastError();
+            if(err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND) {
+                process_entry->is_finished = 1;
+                process_entry->exit_code = 1;
+            } else {
+                gera___panic("Unable to create a child process!");
+            }
         }
         GeraAllocation* allocation = gera___rc_alloc(
             sizeof(size_t), &process_handle_free
@@ -202,6 +208,10 @@ gint process_handle_get(GeraAllocation* captures) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
+        if(process_entry->is_finished) {
+            mutex_unlock(&process_entry->mutex);
+            return;
+        }
         wait_for_pipe(&process_entry->stdout_pipe);
         mutex_unlock(&process_entry->mutex);
     }
@@ -218,6 +228,10 @@ gint process_handle_get(GeraAllocation* captures) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
+        if(process_entry->is_finished) {
+            mutex_unlock(&process_entry->mutex);
+            return;
+        }
         wait_for_pipe(&process_entry->stderr_pipe);
         mutex_unlock(&process_entry->mutex);
     }
@@ -305,6 +319,10 @@ gint process_handle_get(GeraAllocation* captures) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
+        if(process_entry->is_finished) {
+            mutex_unlock(&process_entry->mutex);
+            return;
+        }
         DWORD bytes_written;
         if(!WriteFile(
             process_entry->stdin_pipe.write, text.data, text.length_bytes,
@@ -327,6 +345,14 @@ gint process_handle_get(GeraAllocation* captures) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
+        if(process_entry->is_finished) {
+            gint exit_code = process_entry->exit_code;
+            mutex_unlock(&process_entry->mutex);
+            return (ProcessStatus) {
+                .is_finished = 1,
+                .exit_code = exit_code
+            };
+        }
         DWORD exit_code;
         if(!GetExitCodeProcess(process_entry->pi.hProcess, &exit_code)) {
             if(exit_code != STILL_ACTIVE) {
@@ -519,6 +545,10 @@ gint process_handle_get(GeraAllocation* captures) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
+        if(process_entry->is_finished) {
+            mutex_unlock(&process_entry->mutex);
+            return;
+        }
         fd_set read_fds;
         FD_ZERO(&read_fds);
         FD_SET(process_entry->stdout_pipe[0], &read_fds);
@@ -538,6 +568,10 @@ gint process_handle_get(GeraAllocation* captures) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
+        if(process_entry->is_finished) {
+            mutex_unlock(&process_entry->mutex);
+            return;
+        }
         fd_set read_fds;
         FD_ZERO(&read_fds);
         FD_SET(process_entry->stderr_pipe[0], &read_fds);
@@ -632,6 +666,10 @@ gint process_handle_get(GeraAllocation* captures) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
+        if(process_entry->is_finished) {
+            mutex_unlock(&process_entry->mutex);
+            return;
+        }
         if(write(
             process_entry->stdin_pipe[1], text.data, text.length_bytes
         ) == -1) {
