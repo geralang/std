@@ -1,0 +1,24 @@
+
+mod std::test
+
+use std::str::fmt
+
+pub proc assert(condition) {
+    case condition -> return unit
+    "Assertion failed"
+        |> panic()
+}
+
+pub proc assert_eq(a, b) {
+    case a == b -> return unit
+    "Assertion failed: _ == _"
+        |> fmt([as_str(a), as_str(b)])
+        |> panic()
+}
+
+pub proc assert_ne(a, b) {
+    case a != b -> return unit
+    "Assertion failed: _ != _"
+        |> fmt([as_str(a), as_str(b)])
+        |> panic()
+}
