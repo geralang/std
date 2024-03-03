@@ -154,50 +154,137 @@ proc parse_digit(c) {
     return #ok d
 }
 
-pub proc parse_int(source) {
-    case length(source) == 0 -> return #none unit
-    mut var start = 0
-    mut var sign = 1
-    case at(source, 0) == "-" -> {
-        case length(source) == 1 -> return #none unit
-        sign = -1
-        start = 1
-    }
-    return start..length(source)
-        |> iter::map(|i| source |> at(i))
+proc parse_digits(s) {
+    return s
+        |> iter()
         |> iter::reduce(|r, c| r |> res::and_then(|v|
             parse_digit(c)
                 |> res::map(|d| v * 10 + d)
         ), #ok 0)
-        |> res::map(|r| #some r * sign)
+        |> res::map(|r| #some r)
+        |> res::unwrap_or(#none unit)
+}
+
+pub proc parse_int(source) {
+    case length(source) == 0 -> return #none unit
+    mut var start = 0
+    mut var sign = 1
+    case source |> at(0) {
+        "+" -> {
+            case length(source) == 1 -> return #none unit
+            start = 1
+        }
+        "-" -> {
+            case length(source) == 1 -> return #none unit
+            start = 1
+            sign = -1
+        }
+    }
+    return source
+        |> substring_after(start)
+        |> parse_digits()
+        |> opt::map(|r| r * sign)
+}
+
+proc char_to_ascii_lowercase(c) {
+    var uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    var lowercase = "abcdefghijklmnopqrstuvwxyz"
+    return uppercase
+        |> find(c)
+        |> iter::next()
+        |> opt::map(|i| lowercase |> at(i))
+        |> opt::unwrap_or(c)
+}
+
+proc to_ascii_lowercase(s) {
+    return s
+        |> iter()
+        |> iter::map(char_to_ascii_lowercase)
+        |> join("")
+}
+
+proc parse_fractional(source) {
+    // parses '<int>(.<int>)' (parens = optional)
+    case length(source) == 0 -> return #none unit
+    var dot = source
+        |> find(".")
+        |> iter::next()
+        |> opt::unwrap_or(source |> length())
+    var whole
+    case source
+        |> substring_until(dot)
+        |> parse_int() {
+        #some r -> whole = r |> as_flt()
+        #none -> case dot == 0 -> whole = 0.0
+            else return #none unit
+    }
+    case dot >= length(source) -> return #some whole
+    return 1..(length(source) - dot)
+        |> iter::reduce(|r, i| r |> res::and_then(|v| source
+            |> at(dot + i)
+            |> parse_digit()
+            |> res::map(|d| v + as_flt(d) * math::pow(10.0, -as_flt(i)))
+        ), #ok 0.0)
+        |> res::map(|fraction| #some whole + fraction)
         |> res::unwrap_or(#none unit)
 }
 
 pub proc parse_flt(source) {
     case length(source) == 0 -> return #none unit
-    var dot
-    case source |> find(".") |> iter::next() {
-        #none -> return source
-            |> parse_int()
-            |> opt::map(as_flt)
-        #some d -> dot = d
+    // (optional) '+' or '-'
+    mut var start = 0
+    mut var sign = 1.0
+    case source |> at(0) {
+        "+" -> {
+            case length(source) == 1 -> return #none unit
+            start = 1
+        }
+        "-" -> {
+            case length(source) == 1 -> return #none unit
+            start = 1
+            sign = -1.0
+        }
     }
-    var whole
-    case source |> substring_until(dot) |> parse_int() {
-        #none -> whole = 0.0
-        #some w -> whole = w |> as_flt()
+    var after_sign = source
+        |> substring_after(start)
+    // rest of input may be 'nan', 'inf' or 'infinity' here (case-insensitive)
+    case after_sign |> to_ascii_lowercase() {
+        "nan" -> return #some math::NAN * sign
+        "inf" -> return #some math::INF * sign
+        "infinity" -> return #some math::INF * sign
     }
-    return 1..(length(source) - dot)
-        |> iter::reduce(|r, i| r |> res::and_then(|v|
-            source
-                |> at(i + dot)
-                |> parse_digit()
-                |> res::map(|d| v
-                    + as_flt(d) * math::pow(10.0, -as_flt(i))
-                )
-        ), #ok 0.0)
-        |> res::map(|f| #some std::if_else(
-            at(source, 0) != "-", whole + f, whole - f
-        ))
-        |> res::unwrap_or(#none unit)
-}
+    // parse everything up to the next 'e' or 'E' as a fractional
+    var exponent = 0..length(after_sign)
+        |> iter::find(|i| at(after_sign, i) == "e" || at(after_sign, i) == "E")
+        |> opt::unwrap_or(after_sign |> length())
+    var fractional
+    case after_sign
+        |> substring_until(exponent)
+        |> parse_fractional() {
+        #none -> return #none unit
+        #some f -> fractional = f
+    }
+    // exponent is optional
+    case exponent >= length(after_sign) -> return #some sign * fractional
+    // sign of exponent after 'e' or 'E' (optional) '+' or '-'
+    mut var exponent_sign = 1.0
+    mut var exponent_start = exponent + 1
+    case exponent_start >= length(after_sign) -> return #some sign * fractional
+    case after_sign |> at(exponent_start) {
+        "+" -> exponent_start = exponent + 2
+        "-" -> {
+            exponent_start = exponent + 2
+            exponent_sign = -1.0
+        }
+    }
+    // exponent value
+    var exponent_val
+    case after_sign
+        |> substring_after(exponent_start)
+        |> parse_int() {
+        #some e -> exponent_val = math::pow(10.0, as_flt(e) * exponent_sign)
+        #none -> case exponent_start == length(after_sign) -> exponent_val = 1.0
+            else return #none unit
+    }
+    return #some sign * fractional * exponent_val
+} 
