@@ -127,9 +127,9 @@ proc with_capacity(initial_capacity) { return {
         .> iter()
         |> iter::map(|v| v.value),
 
-    // clone = |self| self
-    //     .> iter()
-    //     |> collect(),
+    clone = |self| self
+        .> iter()
+        |> collect(),
 
 } }
 

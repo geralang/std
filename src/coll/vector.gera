@@ -111,9 +111,9 @@ pub proc new() { return {
         return self
     },
 
-    // clone = |self| self
-    //     .> iter()
-    //     |> collect(),
+    clone = |self| self
+        .> iter()
+        |> collect(),
 
     reverse = |self| {
         0..(self.size / 2) |> iter::for_each(|o| {
