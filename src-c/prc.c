@@ -366,7 +366,7 @@ gint process_handle_get(GeraAllocation* captures) {
         }
         mutex_unlock(&process_entry->mutex);
         return (ProcessStatus) {
-            .is_finished = 1,
+            .is_finished = exit_code != STILL_ACTIVE,
             .exit_code = exit_code
         };
     }
