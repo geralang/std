@@ -288,3 +288,9 @@ pub proc parse_flt(source) {
     }
     return #some sign * fractional * exponent_val
 } 
+
+pub proc repeat(repeated, times) {
+    return iter::repeat_over(|| repeated)
+        |> iter::take(times)
+        |> join("")
+}
