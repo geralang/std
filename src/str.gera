@@ -75,7 +75,7 @@ pub proc fmt(s, v) {
         case ci >= length(rs) -> return #end unit
         case vi >= length(v) -> return #end unit
         case at(rs, ci) == "_" -> {
-            var inserted = v[current.vi]
+            var inserted = v[vi]
             rs = rs
                 |> substring_until(ci)
                 |> concat(inserted)
@@ -88,9 +88,11 @@ pub proc fmt(s, v) {
         return #next unit
     })
     case vi < length(v) -> {
-        "the format string '_' does not \
-contain enough underscores for _ value(s)"
-            |> fmt([s, v |> length() |> as_str()])
+        "the format string '" 
+            |> concat(s) 
+            |> concat("' does not contain enough underscores for ") 
+            |> concat(v |> length() |> as_str()) 
+            |> concat(" value(s)") 
             |> panic()
     }
     return rs
