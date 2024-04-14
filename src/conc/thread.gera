@@ -4,7 +4,7 @@ mod std::conc::Thread
 use std::internal::conc::Thread::*
 
 target c {
-    pub proc new(task) { return {
+    pub proc new(task) = {
         handle = internal_spawn(task),
 
         notify = |self| {
@@ -16,13 +16,9 @@ target c {
             internal_join(self.handle)
             return self
         }
-    } }
-
-    pub proc wait() {
-        internal_wait()
     }
 
-    pub proc sleep(time) {
-        return internal_sleep(time)
-    }
+    pub proc wait() = internal_wait()
+
+    pub proc sleep(time) = internal_sleep(time)
 }

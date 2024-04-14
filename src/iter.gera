@@ -3,47 +3,43 @@ mod std::iter
 
 use std::opt
 
-pub proc map(iter, mapping) {
-    return || {
-        case iter() {
-            #end -> return #end unit
-            #next n -> return #next mapping(n)
-        }
+pub proc map(iter, mapping) = || {
+    case iter() {
+        #end -> return #end unit
+        #next n -> return #next mapping(n)
     }
 }
 
-pub proc filter(iter, condition) {
-    return || {
-        var result = { val = #end unit }
-        exhaust(|| {
-            var current
-            case iter() {
-                #end -> return #end unit
-                #next n -> current = n
-            }
-            case condition(current) -> {
-                result.val = #next current
-                return #end unit
-            }
-            return #next unit
-        })
-        return result.val
-    }
+pub proc filter(iter, condition) = || {
+    mut var result = #end unit
+    exhaust(|| {
+        var current
+        case iter() {
+            #end -> return #end unit
+            #next n -> current = n
+        }
+        case condition(current) -> {
+            result = #next current
+            return #end unit
+        }
+        return #next unit
+    })
+    return result
 }
 
 pub proc reduce(iter, reduction, initial) {
-    var value = { val = initial }
-    iter |> map(|v| {
-        value.val = reduction(value.val, v)
+    mut var acc = initial
+    iter |> map(-> {
+        acc = reduction(acc, it)
     }) |> exhaust()
-    return value.val
+    return acc
 }
 
 pub proc take(iter, n) {
-    var taken = { count = 0 }
+    mut var i = 0
     return || {
-        case taken.count >= n -> return #end unit
-        taken.count = taken.count + 1
+        case i >= n -> return #end unit
+        i = i + 1
         return iter()
     }
 }
@@ -68,40 +64,34 @@ pub proc skip(iter, n) {
     return iter
 }
 
-pub proc for_each(iter, action) {
-    iter |> map(action) |> exhaust()
-}
+pub proc for_each(iter, action) = iter
+    |> map(action)
+    |> exhaust()
 
-pub proc zip(iter_a, iter_b, combinator) {
-    return || {
-        var val_a
-        case iter_a() {
-            #end -> return #end unit
-            #next v -> val_a = v
-        }
-        var val_b
-        case iter_b() {
-            #end -> return #end unit
-            #next v -> val_b = v
-        }
-        return #next combinator(val_a, val_b)
+pub proc zip(iter_a, iter_b, combinator) = || {
+    var val_a
+    case iter_a() {
+        #end -> return #end unit
+        #next v -> val_a = v
     }
-}
-
-pub proc chain(iter_a, iter_b) {
-    return || {
-        case iter_a() {
-            #next n -> return #next n
-            #end -> {}
-        }
-        return iter_b()
+    var val_b
+    case iter_b() {
+        #end -> return #end unit
+        #next v -> val_b = v
     }
+    return #next combinator(val_a, val_b)
 }
 
-pub proc count(iter) {
-    return iter
-        |> reduce(|count, e| count + 1, 0)
+pub proc chain(iter_a, iter_b) = || {
+    case iter_a() {
+        #next n -> return #next n
+        #end -> {}
+    }
+    return iter_b()
 }
+
+pub proc count(iter) = iter
+    |> reduce(|count, e| count + 1, 0)
 
 pub proc next(iter) {
     case iter() {
@@ -111,20 +101,20 @@ pub proc next(iter) {
 }
 
 pub proc last(iter) {
-    var result = { value = #none unit }
+    mut var result = #none unit
     iter |> for_each(|v| {
-        result.value = #some v
+        result = #some v
     })
-    return result.value
+    return result
 }
 
-pub proc find(iter, condition) {
-    return iter |> filter(condition) |> next()
-}
+pub proc find(iter, condition) = iter
+    |> filter(condition)
+    |> next()
 
-pub proc find_last(iter, condition) {
-    return iter |> filter(condition) |> last()
-}
+pub proc find_last(iter, condition) = iter
+    |> filter(condition)
+    |> last()
 
 pub proc enumerate(iter) {
     mut var i = 0
@@ -135,15 +125,11 @@ pub proc enumerate(iter) {
     })
 }
 
-pub proc has(iter, element) {
-    return iter
-        |> find(|e| e == element)
-        |> opt::is_some()
-}
+pub proc has(iter, element) = iter
+    |> find(|e| e == element)
+    |> opt::is_some()
 
-pub proc empty() {
-    return || #end unit
-}
+pub proc empty() = || #end unit
 
 pub proc over_value(v) {
     mut var done = false
@@ -154,8 +140,4 @@ pub proc over_value(v) {
     }
 }
 
-pub proc repeat_over(f) {
-    return || {
-        return #next f()
-    }
-}
+pub proc repeat_over(f) = || #next f()

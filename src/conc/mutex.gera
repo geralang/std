@@ -5,7 +5,7 @@ use std::internal::conc::Mutex::*
 use std::opt
 
 target c {
-    pub proc new() { return {
+    pub proc new() = {
         handle = #none unit,
 
         init_handle = |self| {
@@ -29,11 +29,9 @@ target c {
             return self
         },
 
-        is_locked = |self| {
-            return self.handle
-                |> opt::map(internal_is_locked)
-                |> opt::unwrap_or(false)
-        },
+        is_locked = |self| self.handle
+            |> opt::map(internal_is_locked)
+            |> opt::unwrap_or(false),
 
         unlock = |self| {
             self .> init_handle()
@@ -41,5 +39,5 @@ target c {
                 |> opt::expect("handle should exist at this point")
                 |> internal_unlock()
         }
-    } }
+    }
 }

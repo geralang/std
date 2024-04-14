@@ -73,13 +73,11 @@ pub proc unwrap_err_or_else(result, f) {
     }
 }
 
-pub proc expect(result, reason) {
-    return result |> unwrap_or_else(|e| panic(reason))
-}
+pub proc expect(result, reason) = result
+    |> unwrap_or_else(|e| panic(reason))
 
-pub proc expect_err(result, reason) {
-    return result |> unwrap_err_or_else(|o| panic(reason))
-}
+pub proc expect_err(result, reason) = result
+    |> unwrap_err_or_else(|o| panic(reason))
 
 pub proc and(result, other) {
     case result {
@@ -109,14 +107,10 @@ pub proc or_else(result, f) {
     }
 }
 
-pub proc iter(result) {
-    return result
-        |> map(|o| iter::over_value(o))
-        |> unwrap_or_else(|e| iter::empty())
-}
+pub proc iter(result) = result
+    |> map(-> iter::over_value(it))
+    |> unwrap_or(iter::empty())
 
-pub proc iter_err(result) {
-    return result
-        |> map_err(|e| iter::over_value(e))
-        |> unwrap_err_or_else(|o| iter::empty())
-}
+pub proc iter_err(result) = result
+    |> map_err(-> iter::over_value(it))
+    |> unwrap_err_or(iter::empty())

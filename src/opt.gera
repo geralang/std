@@ -38,18 +38,12 @@ pub proc unwrap_or_else(optional, f) {
     }
 }
 
-pub proc expect(optional, reason) {
-    case optional {
-        #some value -> return value
-        #none -> return panic(reason)
-    }
-}
+pub proc expect(optional, reason) = optional
+    |> unwrap_or_else(|| panic(reason))
 
-pub proc iter(optional) {
-    return optional
-        |> map(|v| iter::over_value(v))
-        |> unwrap_or_else(|| iter::empty())
-}
+pub proc iter(optional) = optional
+    |> map(-> iter::over_value(it))
+    |> unwrap_or(iter::empty())
 
 pub proc flatten(optional) {
     case optional {

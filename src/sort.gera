@@ -1,7 +1,8 @@
 
 mod std::sort
 
-use std::(iter, opt)
+use std::iter::*
+use std::opt::*
 use std::rng::Random
 
 pub proc ascending(f) {
@@ -12,29 +13,29 @@ pub proc descending(f) {
     return |a, b| f(b) - f(a)
 }  
 
-pub proc quicksort(array, start, end, comp) {
+pub proc quicksort(src, start, end, comp) {
     case end - start <= 1 -> return unit
-    var some_comp_val = comp(array[start], array[end - 1])
+    var some_comp_val = comp(src[start], src[end - 1])
     var zero = some_comp_val - some_comp_val
     var current = {
         left = start,
         right = end - 1
     }
-    var pivot = array[current.left]//array[Random::int_in(current.left, current.right)]
+    var pivot = src[Random::int_in(current.left, current.right)]
     exhaust(|| {
         current.left = current.left..=current.right
-            |> iter::find(|l| comp(array[l], pivot) >= zero)
-            |> opt::expect("'l' is guaranteed to meet the pivot")
+            |> find(|l| comp(src[l], pivot) >= zero)
+            |> expect("'l' is guaranteed to meet the pivot")
         current.right = current.right..=current.left
-            |> iter::find(|r| comp(array[r], pivot) <= zero)
-            |> opt::expect("'r' is guaranteed to meet the pivot")
-        case array[current.left] == pivot && array[current.right] == pivot
+            |> find(|r| comp(src[r], pivot) <= zero)
+            |> expect("'r' is guaranteed to meet the pivot")
+        case src[current.left] == pivot && src[current.right] == pivot
             -> return #end unit
-        var moved = array[current.left]
-        array[current.left] = array[current.right]
-        array[current.right] = moved
+        var moved = src[current.left]
+        src[current.left] = src[current.right]
+        src[current.right] = moved
         return #next unit
     })
-    quicksort(array, start, current.left, comp)
-    quicksort(array, current.right + 1, end, comp)
+    quicksort(src, start, current.left, comp)
+    quicksort(src, current.right + 1, end, comp)
 }

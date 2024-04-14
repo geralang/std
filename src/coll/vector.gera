@@ -1,7 +1,10 @@
 
 mod std::coll::Vector
 
-use std::(iter, str, arr, sort)
+use std::str::fmt
+use std::arr::subarray_until
+use std::sort::quicksort
+use std::iter::*
 
 pub proc new() { return {
     content = [],
@@ -9,7 +12,7 @@ pub proc new() { return {
 
     grow = |self, default_value, new_alloc_size| {
         var new_content = array(default_value, new_alloc_size)
-        0..length(self.content) |> iter::for_each(|i| {
+        0..length(self.content) |> for_each(|i| {
             new_content[i] = self.content[i]
         })
         self.content = new_content
@@ -32,7 +35,7 @@ pub proc new() { return {
         var new_size = self.size + length(appended_array)
         case new_size > length(self.content)
             -> self .> grow(appended_array[0], new_size)
-        0..length(appended_array) |> iter::for_each(|i| {
+        0..length(appended_array) |> for_each(|i| {
             self.content[self.size + i] = appended_array[i]
         })
         self.size = new_size
@@ -44,7 +47,7 @@ pub proc new() { return {
         var new_size = self.size + appended_vector.size
         case new_size > length(self.content)
             -> self .> grow(appended_vector.content[0], new_size)
-        0..appended_vector.size |> iter::for_each(|i| {
+        0..appended_vector.size |> for_each(|i| {
             self.content[self.size + i] = appended_vector.content[i]
         })
         self.size = new_size
@@ -59,9 +62,9 @@ pub proc new() { return {
         case index < 0 -> idx = index + self.size
         case idx > self.size -> "the insertion index _ is \
     out of bounds for a vector of length _"
-            |> str::fmt([idx |> as_str(), self.size |> as_str()])
+            |> fmt([idx |> as_str(), self.size |> as_str()])
             |> panic()
-        idx..self.size |> iter::for_each(|i| {
+        idx..self.size |> for_each(|i| {
             self.content[i + 1] = self.content[i]
         })
         self.content[idx] = item
@@ -80,11 +83,11 @@ pub proc new() { return {
         case index < 0 -> idx = index + self.size
         case idx >= self.size -> "the index _ is \
     out of bounds for a self of length _"
-            |> str::fmt([idx |> as_str(), self.size |> as_str()])
+            |> fmt([idx |> as_str(), self.size |> as_str()])
             |> panic()
         var removed = self.content[idx]
         self.size = self.size - 1
-        idx..self.size |> iter::for_each(|i| {
+        idx..self.size |> for_each(|i| {
             self.content[i] = self.content[i + 1]
         })
         return removed
@@ -95,7 +98,7 @@ pub proc new() { return {
         case index < 0 -> idx = index + self.size
         case idx >= self.size -> "the index _ is \
     out of bounds for a vector of length _"
-            |> str::fmt([idx |> as_str(), self.size |> as_str()])
+            |> fmt([idx |> as_str(), self.size |> as_str()])
             |> panic()
         return self.content[idx]
     },
@@ -105,7 +108,7 @@ pub proc new() { return {
         case index < 0 -> idx = index + self.size
         case idx >= self.size -> "the index _ is \
     out of bounds for a vector of length _"
-            |> str::fmt([idx |> as_str(), self.size |> as_str()])
+            |> fmt([idx |> as_str(), self.size |> as_str()])
             |> panic()
         self.content[idx] = value
         return self
@@ -116,7 +119,7 @@ pub proc new() { return {
         |> collect(),
 
     reverse = |self| {
-        0..(self.size / 2) |> iter::for_each(|o| {
+        0..(self.size / 2) |> for_each(|o| {
             var left = o
             var right = self.size - 1 - o
             var old_left = self.content[left]
@@ -128,22 +131,22 @@ pub proc new() { return {
 
     iter = |self| {
         return 0..self.size
-            |> iter::map(|i| self.content[i])
+            |> map(|i| self.content[i])
     },
 
     as_array = |self| {
         return self.content
-            |> arr::subarray_until(self.size)
+            |> subarray_until(self.size)
     },
 
     sort = |self, comp| {
-        sort::quicksort(self.content, 0, self.size, comp)
+        quicksort(self.content, 0, self.size, comp)
         return self
     }
 } }
 
 pub proc collect(from_iter) {
     var dest = new()
-    from_iter |> iter::for_each(|item| dest .> push(item))
+    from_iter |> for_each(|item| dest .> push(item))
     return dest 
 }

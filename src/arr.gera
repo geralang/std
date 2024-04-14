@@ -1,8 +1,10 @@
 
 mod std::arr
 
-use std::(str, iter, opt, sort)
+use std::str::fmt
+use std::sort::quicksort
 use std::coll::Vector
+use std::iter::*
 
 pub proc subarray(a, start, end) {
     mut var start_index = start
@@ -12,7 +14,7 @@ pub proc subarray(a, start, end) {
     case start_index > end_index -> {
         "the start index _ is larger than \
 the end index _ (length of array is _)"
-            |> str::fmt([
+            |> fmt([
                 start_index |> as_str(),
                 end_index |> as_str(),
                 a |> length() |> as_str()
@@ -21,41 +23,38 @@ the end index _ (length of array is _)"
     }
     case start_index == end_index -> return []
     var dest_length = end_index - start_index
-    var dest = array(a[start_index], dest_length)
-    0..dest_length |> iter::for_each(|i| {
+    var dest = [a[start_index]; dest_length]
+    0..dest_length |> for_each(|i| {
         dest[i] = a[start_index + i]
     })
     return dest
 }
 
-pub proc subarray_until(a, end_index) {
-    return a |> subarray(0, end_index)
-}
+pub proc subarray_until(a, end_index) = a
+    |> subarray(0, end_index)
 
-pub proc subarray_after(a, start_index) {
-    return a |> subarray(start_index, a |> length())
-}
+pub proc subarray_after(a, start_index) = a
+    |> subarray(start_index, a |> length())
 
 pub proc concat(a, b) {
     case length(a) == 0 -> return b
     case length(b) == 0 -> return a
-    var r = array(a[0], length(a) + length(b))
-    0..length(a) |> iter::for_each(|i| {
+    var r = [a[0]; length(a) + length(b)]
+    0..length(a) |> for_each(|i| {
         r[i] = a[i]
     })
-    0..length(b) |> iter::for_each(|i| {
+    0..length(b) |> for_each(|i| {
         r[i + length(a)] = b[i]
     })
     return r
 }
 
-pub proc clone(a) {
-    return a |> subarray(0, a |> length())
-}
+pub proc clone(a) = a
+    |> subarray(0, a |> length())
 
 pub proc reversed(a) {
     var ac = a |> clone()
-    0..(length(ac) / 2) |> iter::for_each(|o| {
+    0..(length(ac) / 2) |> for_each(|o| {
         var left = o
         var right = length(ac) - 1 - o
         var old_left = ac[left]
@@ -65,20 +64,18 @@ pub proc reversed(a) {
     return ac
 }
 
-pub proc iter(a) {
-    return 0..length(a)
-        |> iter::map(|i| a[i])
-}
+pub proc iter(a) = 0..length(a)
+    |> map(|i| a[i])
 
 pub proc collect(i) {
     var dest = Vector::new()
-    i |> iter::for_each(|e| dest .> push(e))
+    i |> for_each(|e| dest .> push(e))
     return dest.content
         |> subarray_until(dest.size)
 }
 
 pub proc sorted(a, comp) {
     var ac = a |> clone()
-    sort::quicksort(ac, 0, length(ac), comp)
+    quicksort(ac, 0, length(ac), comp)
     return ac
 }

@@ -2,10 +2,9 @@
 mod std::prc::Process
 
 use std::internal::prc::Process::*
-use std::opt
 
 target c {
-    pub proc new(program, arguments) { return {
+    pub proc new(program, arguments) = {
         handle = internal_run(program, arguments),
 
         kill = |self| {
@@ -56,7 +55,7 @@ target c {
             var status = internal_status(self.handle)
             return status.is_finished
         }
-    } }
+    }
 
     pub proc exit(code) {
         internal_exit(code)
