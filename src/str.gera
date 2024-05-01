@@ -112,11 +112,12 @@ pub proc split(s, sep) {
                 anchor = i + length(sep)
                 return #next result
             }
-        } else {
-            var result = s |> substring_after(min(anchor, length(s)))
-            anchor = length(s)
-            done = true
-            return #next result
+            #none -> {
+                var result = s |> substring_after(min(anchor, length(s)))
+                anchor = length(s)
+                done = true
+                return #next result
+            }
         }
     }
 }
@@ -205,8 +206,7 @@ proc parse_fractional(source) {
     var whole
     case source |> substring_until(dot) |> parse_int() {
         #some r -> whole = r |> as_flt()
-    } else {
-        case dot == 0 -> whole = 0.0
+        #none -> case dot == 0 -> whole = 0.0
             else return #none unit
     }
     case dot >= length(source) -> return #some whole
@@ -250,7 +250,8 @@ pub proc parse_flt(source) {
     var fractional
     case after_sign |> substring_until(exponent) |> parse_fractional() {
         #some f -> fractional = f
-    } else return #none unit
+        #none -> return #none unit
+    }
     // exponent is optional
     case exponent >= length(after_sign) -> return #some sign * fractional
     // sign of exponent after 'e' or 'E' (optional) '+' or '-'
@@ -268,8 +269,7 @@ pub proc parse_flt(source) {
     var exponent_val
     case after_sign |> substring_after(exponent_start) |> parse_int() {
         #some e -> exponent_val = pow(10.0, as_flt(e) * exponent_sign)
-    } else {
-        case exponent_start == length(after_sign) -> exponent_val = 1.0
+        #none -> case exponent_start == length(after_sign) -> exponent_val = 1.0
             else return #none unit
     }
     return #some sign * fractional * exponent_val

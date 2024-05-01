@@ -6,63 +6,71 @@ use std::iter
 pub proc is_ok(result) {
     case result {
         #ok -> return true
-    } else return false
+        #err -> return false
+    }
 }
 
 pub proc is_err(result) {
     case result {
         #err -> return true
-    } else return false
+        #ok -> return false
+    }
 }
 
 pub proc get_ok(result) {
     case result {
         #ok o -> return #some o
-    } else return #none unit
+        #err -> return #none unit
+    }
 }
 
 pub proc get_err(result) {
     case result {
         #err e -> return #some e
-    } else return #none unit
+        #ok -> return #none unit
+    }
 }
 
 pub proc map(result, mapping) {
     case result {
         #ok o -> return #ok mapping(o)
-    } else return result
+        #err -> return result
+    }
 }
 
 pub proc map_err(result, mapping) {
     case result {
         #err e -> return #err mapping(e)
-    } else return result
+        #ok -> return result 
+    }
 }
 
 pub proc unwrap_or(result, default) {
     case result {
         #ok o -> return o
-    } else return default
+        #err -> return default
+    }
 }
 
 pub proc unwrap_err_or(result, default) {
     case result {
         #err e -> return e
-    } else return default
+        #ok -> return default
+    }
 }
 
 pub proc unwrap_or_else(result, f) {
     case result {
         #ok o -> return o
         #err e -> return f(e)
-    } else return panic("Must be of variant 'ok' or 'err'!")
+    }
 }
 
 pub proc unwrap_err_or_else(result, f) {
     case result {
         #ok o -> return f(o)
         #err e -> return e
-    } else return panic("Must be of variant 'ok' or 'err'!")
+    }
 }
 
 pub proc expect(result, reason) = result
@@ -74,25 +82,29 @@ pub proc expect_err(result, reason) = result
 pub proc and(result, other) {
     case result {
         #ok -> return other
-    } else return result
+        #err -> return result
+    }
 }
 
 pub proc and_then(result, f) {
     case result {
         #ok o -> return f(o)
-    } else return result
+        #err -> return result
+    }
 }
 
 pub proc or(result, other) {
     case result {
         #err -> return other
-    } else return result
+        #ok -> return result
+    }
 }
 
 pub proc or_else(result, f) {
     case result {
         #err e -> return f(e) 
-    } else return result
+        #ok -> return result
+    }
 }
 
 pub proc iter(result) = result
