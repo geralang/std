@@ -59,7 +59,7 @@ pub proc as_days(timestamp) = timestamp / DAY_IN_MILLIS
 
 pub proc as_hours(timestamp) = timestamp / HOUR_IN_MILLIS 
 
-pub proc as_minutes(timestamp) = timestamp / MILLIS_PER_MINUTE 
+pub proc as_minutes(timestamp) = timestamp / MINUTE_IN_MILLIS 
 
 pub proc as_seconds(timestamp) = timestamp / SECOND_IN_MILLIS
 
