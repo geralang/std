@@ -6,10 +6,6 @@ use std::opt::*
 use std::math::*
 use std::res::*
 
-pub proc concat(a, b) = core::concat(a, b)
-
-pub proc substring(s, start, end) = core::substring(s, start, end)
-
 pub proc substring_until(s, end_index) = s
     |> substring(0, end_index)
 
@@ -111,17 +107,16 @@ pub proc split(s, sep) {
             ) 
         else next_split = #none unit
         case next_split {
-            #none -> {
-                var result = s |> substring_after(min(anchor, length(s)))
-                anchor = length(s)
-                done = true
-                return #next result
-            }
             #some i -> {
                 var result = s |> substring(anchor, i)
                 anchor = i + length(sep)
                 return #next result
             }
+        } else {
+            var result = s |> substring_after(min(anchor, length(s)))
+            anchor = length(s)
+            done = true
+            return #next result
         }
     }
 }
@@ -210,7 +205,8 @@ proc parse_fractional(source) {
     var whole
     case source |> substring_until(dot) |> parse_int() {
         #some r -> whole = r |> as_flt()
-        #none -> case dot == 0 -> whole = 0.0
+    } else {
+        case dot == 0 -> whole = 0.0
             else return #none unit
     }
     case dot >= length(source) -> return #some whole
@@ -253,9 +249,8 @@ pub proc parse_flt(source) {
         |> unwrap_or(after_sign |> length())
     var fractional
     case after_sign |> substring_until(exponent) |> parse_fractional() {
-        #none -> return #none unit
         #some f -> fractional = f
-    }
+    } else return #none unit
     // exponent is optional
     case exponent >= length(after_sign) -> return #some sign * fractional
     // sign of exponent after 'e' or 'E' (optional) '+' or '-'
@@ -273,7 +268,8 @@ pub proc parse_flt(source) {
     var exponent_val
     case after_sign |> substring_after(exponent_start) |> parse_int() {
         #some e -> exponent_val = pow(10.0, as_flt(e) * exponent_sign)
-        #none -> case exponent_start == length(after_sign) -> exponent_val = 1.0
+    } else {
+        case exponent_start == length(after_sign) -> exponent_val = 1.0
             else return #none unit
     }
     return #some sign * fractional * exponent_val

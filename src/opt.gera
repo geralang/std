@@ -6,36 +6,31 @@ use std::iter
 pub proc is_some(optional) {
     case optional {
         #some -> return true
-        #none -> return false
-    }
+    } else return false
 }
 
 pub proc is_none(optional) {
     case optional {
-        #some -> return false
         #none -> return true
-    }
+    } else return false
 }
 
 pub proc map(optional, mapping) {
     case optional {
         #some value -> return #some mapping(value)
-        #none -> return #none unit
-    }
+    } else return #none unit
 }
 
 pub proc unwrap_or(optional, default) {
     case optional {
         #some value -> return value
-        #none -> return default
-    }
+    } else return default
 }
 
 pub proc unwrap_or_else(optional, f) {
     case optional {
         #some value -> return value
-        #none -> return f()
-    }
+    } else return f()
 }
 
 pub proc expect(optional, reason) = optional
@@ -47,7 +42,6 @@ pub proc iter(optional) = optional
 
 pub proc flatten(optional) {
     case optional {
-        #none -> return #none unit
         #some nested_optional -> return nested_optional
-    }
+    } else return #none unit
 }

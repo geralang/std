@@ -11,12 +11,11 @@ proc iter_nodes(start_node) {
     mut var current_node = start_node
     return || {
         case current_node {
-            #none -> return #end unit
             #some node -> {
                 current_node = node.next
                 return #next node
             }
-        }
+        } else return #end unit
     }
 }
 
@@ -26,14 +25,14 @@ pub proc new() = with_capacity(INITIAL_SIZE)
 
 proc with_capacity(initial_capacity) = {
     hasher = |v| hash(v),
-    buckets = array(#none unit, initial_capacity),
+    buckets = [#none unit; initial_capacity],
     load_factor = 0.75,
     size = 0,
 
     grow = |self, capacity| {
         case length(self.buckets) >= capacity -> return self
         var old_values = self .> iter()
-        self.buckets = array(#none unit, capacity)
+        self.buckets = [#none unit; capacity]
         old_values |> for_each(|v|
             self .> set(v.key, v.value)
         )
@@ -100,16 +99,15 @@ proc with_capacity(initial_capacity) = {
         return || {
             var node
             case current_node {
-                #none -> {
-                    bucket_idx = (bucket_idx + 1)..length(buckets)
-                        |> find(|i| buckets[i] |> is_some())
-                        |> unwrap_or(length(buckets))
-                    case bucket_idx >= length(buckets)
-                        -> return #end unit
-                    node = buckets[bucket_idx]
-                        |> expect("Just checked above!")
-                }
                 #some n -> node = n
+            } else {
+                bucket_idx = (bucket_idx + 1)..length(buckets)
+                    |> find(|i| buckets[i] |> is_some())
+                    |> unwrap_or(length(buckets))
+                case bucket_idx >= length(buckets)
+                    -> return #end unit
+                node = buckets[bucket_idx]
+                    |> expect("Just checked above!")
             }
             var entry = { key = node.key, value = node.value }
             current_node = node.next

@@ -5,9 +5,8 @@ use std::opt
 
 pub proc map(iter, mapping) = || {
     case iter() {
-        #end -> return #end unit
         #next n -> return #next mapping(n)
-    }
+    } else return #end unit
 }
 
 pub proc filter(iter, condition) = || {
@@ -15,9 +14,8 @@ pub proc filter(iter, condition) = || {
     exhaust(|| {
         var current
         case iter() {
-            #end -> return #end unit
             #next n -> current = n
-        }
+        } else return #end unit
         case condition(current) -> {
             result = #next current
             return #end unit
@@ -50,9 +48,8 @@ pub proc take_while(iter, cond) {
         case done -> return #end unit
         var value
         case iter() {
-            #end -> return #end unit
             #next n -> value = n
-        }
+        } else return #end unit
         case cond(value) -> return #next value
         done = true
         return #end unit
@@ -71,23 +68,19 @@ pub proc for_each(iter, action) = iter
 pub proc zip(iter_a, iter_b, combinator) = || {
     var val_a
     case iter_a() {
-        #end -> return #end unit
         #next v -> val_a = v
-    }
+    } else return #end unit
     var val_b
     case iter_b() {
-        #end -> return #end unit
         #next v -> val_b = v
-    }
+    } else return #end unit
     return #next combinator(val_a, val_b)
 }
 
 pub proc chain(iter_a, iter_b) = || {
     case iter_a() {
         #next n -> return #next n
-        #end -> {}
-    }
-    return iter_b()
+    } else return iter_b()
 }
 
 pub proc count(iter) = iter
@@ -95,9 +88,8 @@ pub proc count(iter) = iter
 
 pub proc next(iter) {
     case iter() {
-        #end -> return #none unit
         #next v -> return #some v
-    }
+    } return #none unit
 }
 
 pub proc last(iter) {
