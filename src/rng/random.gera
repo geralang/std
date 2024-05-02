@@ -26,10 +26,8 @@ pub proc new(seed) { return {
         return r
     },
 
-    flt = |self| {
-        return as_flt(self .> int() |> abs())
-            / as_flt(INT_MAX)
-    },
+    flt = |self| = as_flt(self .> int() |> abs())
+        / as_flt(INT_MAX),
 
     int_in = |self, min, max| {
         case min > max

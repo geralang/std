@@ -51,7 +51,7 @@ pub proc find(s, sub) {
 pub proc pad_left(s, target_length, padding) {
     var fill_length = target_length - length(s)
     return padding
-        |> string(max(fill_length / length(padding), 0))
+        |> repeat(max(fill_length / length(padding), 0))
         |> concat(padding |> substring_until(fill_length % length(padding)))
         |> concat(s)
 }
@@ -59,7 +59,7 @@ pub proc pad_left(s, target_length, padding) {
 pub proc pad_right(s, target_length, padding) {
     var fill_length = target_length - length(s)
     return s
-        |> concat(padding |> string(max(fill_length / length(padding), 0)))
+        |> concat(padding |> repeat(max(fill_length / length(padding), 0)))
         |> concat(padding |> substring_until(fill_length % length(padding)))
 }
 
@@ -154,7 +154,7 @@ proc parse_digits(s) {
         |> reduce(|r, c| r |> and_then(|v|
             parse_digit(c) |> map(|d| v * 10 + d)
         ), #ok 0)
-        |> map(|r| #some r)
+        |> std::res::map(|r| #some r)
         |> unwrap_or(#none unit)
 }
 

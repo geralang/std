@@ -34,14 +34,14 @@ pub proc get_err(result) {
 pub proc map(result, mapping) {
     case result {
         #ok o -> return #ok mapping(o)
-        #err -> return result
+        #err -> return #err result
     }
 }
 
 pub proc map_err(result, mapping) {
     case result {
         #err e -> return #err mapping(e)
-        #ok -> return result 
+        #ok -> return #ok result 
     }
 }
 
