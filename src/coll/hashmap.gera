@@ -8,7 +8,7 @@ use std::opt::*
 proc choose_bucket(key_hash, capacity) = abs(key_hash % capacity)
 
 proc iter_nodes(start_node) {
-    mut var current_node = start_node
+    mut current_node = start_node
     return || {
         case current_node {
             #some node -> {
@@ -19,7 +19,7 @@ proc iter_nodes(start_node) {
     }
 }
 
-var INITIAL_SIZE = 16
+val INITIAL_SIZE = 16
 
 pub proc new() = with_capacity(INITIAL_SIZE)
 
@@ -31,7 +31,7 @@ proc with_capacity(initial_capacity) = {
 
     grow = |self, capacity| {
         case length(self.buckets) >= capacity -> return self
-        var old_values = self .> iter()
+        val old_values = self .> iter()
         self.buckets = [#none unit; capacity]
         old_values |> for_each(|v|
             self .> set(v.key, v.value)
@@ -40,8 +40,8 @@ proc with_capacity(initial_capacity) = {
     },
 
     set = |self, key, value| {
-        var key_hash = key |> self.hasher()
-        var bucket_idx = key_hash |> choose_bucket(length(self.buckets))
+        val key_hash = key |> self.hasher()
+        val bucket_idx = key_hash |> choose_bucket(length(self.buckets))
         case self.buckets[bucket_idx]
             |> iter_nodes()
             |> find(|node| node.key_hash == key_hash) {
@@ -50,7 +50,7 @@ proc with_capacity(initial_capacity) = {
                 node.value = value
             }
             #none -> {
-                var first_node = self.buckets[bucket_idx]
+                val first_node = self.buckets[bucket_idx]
                 self.buckets[bucket_idx] = #some {
                     key_hash = key_hash,
                     key = key,
@@ -58,7 +58,7 @@ proc with_capacity(initial_capacity) = {
                     next = first_node
                 }
                 self.size = self.size + 1
-                var max_size = as_flt(length(self.buckets)) * self.load_factor
+                val max_size = as_flt(length(self.buckets)) * self.load_factor
                     |> as_int()
                 case self.size > max_size
                     -> self .> grow(length(self.buckets) * 2)
@@ -68,8 +68,8 @@ proc with_capacity(initial_capacity) = {
     },
 
     at = |self, key| {
-        var key_hash = key |> self.hasher()
-        var bucket_idx = key_hash |> choose_bucket(length(self.buckets))
+        val key_hash = key |> self.hasher()
+        val bucket_idx = key_hash |> choose_bucket(length(self.buckets))
         return self.buckets[bucket_idx]
             |> iter_nodes()
             |> find(|node| node.key_hash == key_hash)
@@ -80,8 +80,8 @@ proc with_capacity(initial_capacity) = {
         |> is_some(),
 
     remove = |self, key| {
-        var key_hash = key |> self.hasher()
-        var bucket_idx = key_hash |> choose_bucket(length(self.buckets))
+        val key_hash = key |> self.hasher()
+        val bucket_idx = key_hash |> choose_bucket(length(self.buckets))
         return self.buckets[bucket_idx]
             |> iter_nodes()
             |> find(|node| node.key_hash == key_hash)
@@ -93,11 +93,11 @@ proc with_capacity(initial_capacity) = {
     },
 
     iter = |self| {
-        var buckets = self.buckets
-        mut var bucket_idx = 0
-        mut var current_node = #none unit
+        val buckets = self.buckets
+        mut bucket_idx = 0
+        mut current_node = #none unit
         return || {
-            var node
+            val node
             case current_node {
                 #some n -> node = n
             } else {
@@ -109,7 +109,7 @@ proc with_capacity(initial_capacity) = {
                 node = buckets[bucket_idx]
                     |> expect("Just checked above!")
             }
-            var entry = { key = node.key, value = node.value }
+            val entry = { key = node.key, value = node.value }
             current_node = node.next
             return #next entry
         }
@@ -130,7 +130,7 @@ proc with_capacity(initial_capacity) = {
 }
 
 pub proc collect(from_iter) {
-    var dest = new()
+    val dest = new()
     from_iter |> for_each(|v| dest .> set(v.key, v.value))
     return dest
 }

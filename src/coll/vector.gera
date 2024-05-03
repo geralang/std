@@ -11,7 +11,7 @@ pub proc new() { return {
     size = 0,
 
     grow = |self, default_value, new_alloc_size| {
-        var new_content = [default_value; new_alloc_size]
+        val new_content = [default_value; new_alloc_size]
         0..length(self.content) |> for_each(|i| {
             new_content[i] = self.content[i]
         })
@@ -20,7 +20,7 @@ pub proc new() { return {
     },
 
     push = |self, item| {
-        var new_size = self.size + 1
+        val new_size = self.size + 1
         case length(self.content) == 0
             -> self .> grow(item, 16)
         else case new_size > length(self.content)
@@ -32,7 +32,7 @@ pub proc new() { return {
 
     append_arr = |self, appended_array| {
         case length(appended_array) == 0 -> return self
-        var new_size = self.size + length(appended_array)
+        val new_size = self.size + length(appended_array)
         case new_size > length(self.content)
             -> self .> grow(appended_array[0], new_size)
         0..length(appended_array) |> for_each(|i| {
@@ -44,7 +44,7 @@ pub proc new() { return {
 
     append_vec = |self, appended_vector| {
         case appended_vector.size == 0 -> return self
-        var new_size = self.size + appended_vector.size
+        val new_size = self.size + appended_vector.size
         case new_size > length(self.content)
             -> self .> grow(appended_vector.content[0], new_size)
         0..appended_vector.size |> for_each(|i| {
@@ -55,10 +55,10 @@ pub proc new() { return {
     },
 
     insert = |self, index, item| {
-        var new_size = self.size + 1
+        val new_size = self.size + 1
         case new_size > length(self.content)
             -> self .> grow(item, length(self.content) * 2)
-        mut var idx = index
+        mut idx = index
         case index < 0 -> idx = index + self.size
         case idx > self.size -> "the insertion index _ is \
     out of bounds for a vector of length _"
@@ -79,13 +79,13 @@ pub proc new() { return {
     },
 
     remove = |self, index| {
-        mut var idx = index
+        mut idx = index
         case index < 0 -> idx = index + self.size
         case idx >= self.size -> "the index _ is \
     out of bounds for a self of length _"
             |> fmt([idx |> as_str(), self.size |> as_str()])
             |> panic()
-        var removed = self.content[idx]
+        val removed = self.content[idx]
         self.size = self.size - 1
         idx..self.size |> for_each(|i| {
             self.content[i] = self.content[i + 1]
@@ -94,7 +94,7 @@ pub proc new() { return {
     },
 
     at = |self, index| {
-        mut var idx = index
+        mut idx = index
         case index < 0 -> idx = index + self.size
         case idx >= self.size -> "the index _ is \
     out of bounds for a vector of length _"
@@ -104,7 +104,7 @@ pub proc new() { return {
     },
 
     set = |self, index, value| {
-        mut var idx = index
+        mut idx = index
         case index < 0 -> idx = index + self.size
         case idx >= self.size -> "the index _ is \
     out of bounds for a vector of length _"
@@ -120,9 +120,9 @@ pub proc new() { return {
 
     reverse = |self| {
         0..(self.size / 2) |> for_each(|o| {
-            var left = o
-            var right = self.size - 1 - o
-            var old_left = self.content[left]
+            val left = o
+            val right = self.size - 1 - o
+            val old_left = self.content[left]
             self.content[left] = self.content[right]
             self.content[right] = old_left
         })
@@ -146,7 +146,7 @@ pub proc new() { return {
 } }
 
 pub proc collect(from_iter) {
-    var dest = new()
+    val dest = new()
     from_iter |> for_each(|item| dest .> push(item))
     return dest 
 }

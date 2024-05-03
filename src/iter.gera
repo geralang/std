@@ -11,9 +11,9 @@ pub proc map(iter, mapping) = || {
 }
 
 pub proc filter(iter, condition) = || {
-    mut var result = #end unit
+    mut result = #end unit
     exhaust(|| {
-        var current
+        val current
         case iter() {
             #next n -> current = n
             #end -> return #end unit
@@ -28,7 +28,7 @@ pub proc filter(iter, condition) = || {
 }
 
 pub proc reduce(iter, reduction, initial) {
-    mut var acc = initial
+    mut acc = initial
     iter |> map(-> {
         acc = reduction(acc, it)
     }) |> exhaust()
@@ -36,7 +36,7 @@ pub proc reduce(iter, reduction, initial) {
 }
 
 pub proc take(iter, n) {
-    mut var i = 0
+    mut i = 0
     return || {
         case i >= n -> return #end unit
         i = i + 1
@@ -45,10 +45,10 @@ pub proc take(iter, n) {
 }
 
 pub proc take_while(iter, cond) {
-    mut var done = false
+    mut done = false
     return || {
         case done -> return #end unit
-        var value
+        val value
         case iter() {
             #next n -> value = n
             #end -> return #end unit
@@ -69,12 +69,12 @@ pub proc for_each(iter, action) = iter
     |> exhaust()
 
 pub proc zip(iter_a, iter_b, combinator) = || {
-    var val_a
+    val val_a
     case iter_a() {
         #next v -> val_a = v
         #end -> return #end unit
     }
-    var val_b
+    val val_b
     case iter_b() {
         #next v -> val_b = v
         #end -> return #end unit
@@ -100,7 +100,7 @@ pub proc next(iter) {
 }
 
 pub proc last(iter) {
-    mut var result = #none unit
+    mut result = #none unit
     iter |> for_each(|v| {
         result = #some v
     })
@@ -116,9 +116,9 @@ pub proc find_last(iter, condition) = iter
     |> last()
 
 pub proc enumerate(iter) {
-    mut var i = 0
+    mut i = 0
     return iter |> map(|v| {
-        var ci = i
+        val ci = i
         i = i + 1
         return { idx = ci, val = v }
     })
@@ -131,7 +131,7 @@ pub proc has(iter, element) = iter
 pub proc empty() = || #end unit
 
 pub proc over_value(v) {
-    mut var done = false
+    mut done = false
     return || {
         case done -> return #end unit
         done = true

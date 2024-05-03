@@ -15,13 +15,13 @@ pub proc descending(f) {
 
 pub proc quicksort(src, start, end, comp) {
     case end - start <= 1 -> return unit
-    var some_comp_val = comp(src[start], src[end - 1])
-    var zero = some_comp_val - some_comp_val
-    var current = {
+    val some_comp_val = comp(src[start], src[end - 1])
+    val zero = some_comp_val - some_comp_val
+    val current = {
         left = start,
         right = end - 1
     }
-    var pivot = src[Random::int_in(current.left, current.right)]
+    val pivot = src[Random::int_in(current.left, current.right)]
     exhaust(|| {
         current.left = current.left..=current.right
             |> find(|l| comp(src[l], pivot) >= zero)
@@ -31,7 +31,7 @@ pub proc quicksort(src, start, end, comp) {
             |> expect("'r' is guaranteed to meet the pivot")
         case src[current.left] == pivot && src[current.right] == pivot
             -> return #end unit
-        var moved = src[current.left]
+        val moved = src[current.left]
         src[current.left] = src[current.right]
         src[current.right] = moved
         return #next unit

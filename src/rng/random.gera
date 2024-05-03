@@ -7,8 +7,8 @@ use std::str::fmt
 use std::time::now_local
 use std::math::*
 
-var LCG_MULTIPLIER = 6364136223846793005
-var LCG_INCREMENT = 1442695040888963407
+val LCG_MULTIPLIER = 6364136223846793005
+val LCG_INCREMENT = 1442695040888963407
 
 pub proc new(seed) { return {
     state = seed,
@@ -19,7 +19,7 @@ pub proc new(seed) { return {
     },
 
     int = |self| {
-        var r = self.state
+        val r = self.state
             * LCG_MULTIPLIER
             + LCG_INCREMENT
         self.state = r
@@ -34,8 +34,8 @@ pub proc new(seed) { return {
             -> "The minimum (_) is larger than the maximum (_)!"
                 |> fmt([min |> as_str(), max |> as_str()])
                 |> panic()
-        var range = max - min + 1
-        var r = self .> int() |> abs()
+        val range = max - min + 1
+        val r = self .> int() |> abs()
         case range <= 0 -> return r // this can only happen if the range is too big
         return min + r % range
     },
@@ -45,14 +45,14 @@ pub proc new(seed) { return {
             -> "The minimum (_) is larger than the maximum (_)!"
                 |> fmt([min |> as_str(), max |> as_str()])
                 |> panic()
-        var range = max - min
-        var r = self .> flt()
+        val range = max - min
+        val r = self .> flt()
         return min + r * range
     },
 
     choice = |self, src| {
         case length(src) == 0 -> panic("Source array is empty!")
-        var item = src[self .> int_in(0, length(src) - 1)]
+        val item = src[self .> int_in(0, length(src) - 1)]
         return item
     },
 
@@ -62,8 +62,8 @@ pub proc new(seed) { return {
     }
 } }
 
-var GLOBAL_GEN = new(0)
-var GLOBAL_GEN_INFO = { seeded = false }
+val GLOBAL_GEN = new(0)
+val GLOBAL_GEN_INFO = { seeded = false }
 
 proc init_global_gen() {
     case !GLOBAL_GEN_INFO.seeded -> {

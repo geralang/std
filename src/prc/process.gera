@@ -46,13 +46,13 @@ target c {
         },
         
         exit_code = |self| {
-            var status = internal_status(self.handle)
+            val status = internal_status(self.handle)
             case !status.is_finished -> return #none unit
             else return #some status.exit_code
         },
 
         is_done = |self| {
-            var status = internal_status(self.handle)
+            val status = internal_status(self.handle)
             return status.is_finished
         }
     }

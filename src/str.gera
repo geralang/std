@@ -17,27 +17,27 @@ pub proc at(s, index) = s
 
 pub proc starts_with(s, prefix) {
     case length(prefix) > length(s) -> return false
-    var compared_prefix = s
+    val compared_prefix = s
         |> substring_until(length(prefix))
     return compared_prefix == prefix
 }
 
 pub proc ends_with(s, suffix) {
     case length(suffix) > length(s) -> return false
-    var compared_suffix = s
+    val compared_suffix = s
         |> substring_after(-length(suffix))
     return compared_suffix == suffix
 }
 
 pub proc find(s, sub) {
-    mut var i = 0
+    mut i = 0
     return || {
-        mut var found = #end unit
+        mut found = #end unit
         exhaust(|| {
             case i > length(s) - length(sub) -> return #end unit
-            var c = i
+            val c = i
             i = i + 1
-            var compared_sub = s |> substring(c, c + length(sub))
+            val compared_sub = s |> substring(c, c + length(sub))
             case compared_sub == sub -> {
                 found = #next c
                 return #end unit
@@ -49,7 +49,7 @@ pub proc find(s, sub) {
 }
 
 pub proc pad_left(s, target_length, padding) {
-    var fill_length = target_length - length(s)
+    val fill_length = target_length - length(s)
     return padding
         |> repeat(max(fill_length / length(padding), 0))
         |> concat(padding |> substring_until(fill_length % length(padding)))
@@ -57,21 +57,21 @@ pub proc pad_left(s, target_length, padding) {
 }
 
 pub proc pad_right(s, target_length, padding) {
-    var fill_length = target_length - length(s)
+    val fill_length = target_length - length(s)
     return s
         |> concat(padding |> repeat(max(fill_length / length(padding), 0)))
         |> concat(padding |> substring_until(fill_length % length(padding)))
 }
 
 pub proc fmt(s, v) {
-    mut var ci = 0
-    mut var vi = 0
-    mut var rs = s
+    mut ci = 0
+    mut vi = 0
+    mut rs = s
     exhaust(|| {
         case ci >= length(rs) -> return #end unit
         case vi >= length(v) -> return #end unit
         case at(rs, ci) == "_" -> {
-            var inserted = v[vi]
+            val inserted = v[vi]
             rs = rs
                 |> substring_until(ci)
                 |> concat(inserted)
@@ -95,12 +95,12 @@ pub proc fmt(s, v) {
 }
 
 pub proc split(s, sep) {
-    mut var anchor = 0
-    mut var done = false
-    var until_length = length(s) - length(sep)
+    mut anchor = 0
+    mut done = false
+    val until_length = length(s) - length(sep)
     return || {
         case done -> return #end unit
-        var next_split
+        val next_split
         case anchor <= until_length
             -> next_split = anchor..=until_length |> find(|index| 
                 substring(s, index, index + length(sep)) == sep
@@ -108,12 +108,12 @@ pub proc split(s, sep) {
         else next_split = #none unit
         case next_split {
             #some i -> {
-                var result = s |> substring(anchor, i)
+                val result = s |> substring(anchor, i)
                 anchor = i + length(sep)
                 return #next result
             }
             #none -> {
-                var result = s |> substring_after(min(anchor, length(s)))
+                val result = s |> substring_after(min(anchor, length(s)))
                 anchor = length(s)
                 done = true
                 return #next result
@@ -123,8 +123,8 @@ pub proc split(s, sep) {
 }
 
 pub proc join(strings, sep) {
-    mut var value = ""
-    mut var had_part = false
+    mut value = ""
+    mut had_part = false
     strings |> for_each(|s| {
         case had_part
             -> value = value |> concat(sep)
@@ -138,7 +138,7 @@ pub proc iter(s) = 0..length(s)
     |> map(|i| s |> at(i))
 
 proc parse_digit(c) {
-    var d
+    val d
     case c {
         "0" -> d = 0  "1" -> d = 1  "2" -> d = 2
         "3" -> d = 3  "4" -> d = 4  "5" -> d = 5
@@ -160,8 +160,8 @@ proc parse_digits(s) {
 
 pub proc parse_int(source) {
     case length(source) == 0 -> return #none unit
-    mut var start = 0
-    mut var sign = 1
+    mut start = 0
+    mut sign = 1
     case source |> at(0) {
         "+" -> {
             case length(source) == 1 -> return #none unit
@@ -180,8 +180,8 @@ pub proc parse_int(source) {
 }
 
 proc char_to_ascii_lowercase(c) {
-    var uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    var lowercase = "abcdefghijklmnopqrstuvwxyz"
+    val uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    val lowercase = "abcdefghijklmnopqrstuvwxyz"
     return uppercase
         |> find(c)
         |> next()
@@ -199,11 +199,11 @@ proc to_ascii_lowercase(s) {
 proc parse_fractional(source) {
     // parses '<int>(.<int>)' (parens = optional)
     case length(source) == 0 -> return #none unit
-    var dot = source
+    val dot = source
         |> find(".")
         |> next()
         |> unwrap_or(source |> length())
-    var whole
+    val whole
     case source |> substring_until(dot) |> parse_int() {
         #some r -> whole = r |> as_flt()
         #none -> case dot == 0 -> whole = 0.0
@@ -223,8 +223,8 @@ proc parse_fractional(source) {
 pub proc parse_flt(source) {
     case length(source) == 0 -> return #none unit
     // (optional) '+' or '-'
-    mut var start = 0
-    mut var sign = 1.0
+    mut start = 0
+    mut sign = 1.0
     case source |> at(0) {
         "+" -> {
             case length(source) == 1 -> return #none unit
@@ -236,7 +236,7 @@ pub proc parse_flt(source) {
             sign = -1.0
         }
     }
-    var after_sign = source |> substring_after(start)
+    val after_sign = source |> substring_after(start)
     // rest of input may be 'nan', 'inf' or 'infinity' here (case-insensitive)
     case after_sign |> to_ascii_lowercase() {
         "nan" -> return #some NAN * sign
@@ -244,10 +244,10 @@ pub proc parse_flt(source) {
         "infinity" -> return #some INF * sign
     }
     // parse everything up to the next 'e' or 'E' as a fractional
-    var exponent = 0..length(after_sign)
+    val exponent = 0..length(after_sign)
         |> find(|i| at(after_sign, i) == "e" || at(after_sign, i) == "E")
         |> unwrap_or(after_sign |> length())
-    var fractional
+    val fractional
     case after_sign |> substring_until(exponent) |> parse_fractional() {
         #some f -> fractional = f
         #none -> return #none unit
@@ -255,8 +255,8 @@ pub proc parse_flt(source) {
     // exponent is optional
     case exponent >= length(after_sign) -> return #some sign * fractional
     // sign of exponent after 'e' or 'E' (optional) '+' or '-'
-    mut var exponent_sign = 1.0
-    mut var exponent_start = exponent + 1
+    mut exponent_sign = 1.0
+    mut exponent_start = exponent + 1
     case exponent_start >= length(after_sign) -> return #some sign * fractional
     case after_sign |> at(exponent_start) {
         "+" -> exponent_start = exponent + 2
@@ -266,7 +266,7 @@ pub proc parse_flt(source) {
         }
     }
     // exponent value
-    var exponent_val
+    val exponent_val
     case after_sign |> substring_after(exponent_start) |> parse_int() {
         #some e -> exponent_val = pow(10.0, as_flt(e) * exponent_sign)
         #none -> case exponent_start == length(after_sign) -> exponent_val = 1.0

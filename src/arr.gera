@@ -7,9 +7,9 @@ use std::coll::Vector
 use std::iter::*
 
 pub proc subarray(a, start, end) {
-    mut var start_index = start
+    mut start_index = start
     case start < 0 -> start_index = length(a) + start
-    mut var end_index = end
+    mut end_index = end
     case end < 0 -> end_index = length(a) + end
     case start_index > end_index -> {
         "the start index _ is larger than \
@@ -22,8 +22,8 @@ the end index _ (length of array is _)"
             |> panic()
     }
     case start_index == end_index -> return []
-    var dest_length = end_index - start_index
-    var dest = [a[start_index]; dest_length]
+    val dest_length = end_index - start_index
+    val dest = [a[start_index]; dest_length]
     0..dest_length |> for_each(|i| {
         dest[i] = a[start_index + i]
     })
@@ -39,7 +39,7 @@ pub proc subarray_after(a, start_index) = a
 pub proc concat(a, b) {
     case length(a) == 0 -> return b
     case length(b) == 0 -> return a
-    var r = [a[0]; length(a) + length(b)]
+    val r = [a[0]; length(a) + length(b)]
     0..length(a) |> for_each(|i| {
         r[i] = a[i]
     })
@@ -53,11 +53,11 @@ pub proc clone(a) = a
     |> subarray(0, a |> length())
 
 pub proc reversed(a) {
-    var ac = a |> clone()
+    val ac = a |> clone()
     0..(length(ac) / 2) |> for_each(|o| {
-        var left = o
-        var right = length(ac) - 1 - o
-        var old_left = ac[left]
+        val left = o
+        val right = length(ac) - 1 - o
+        val old_left = ac[left]
         ac[left] = ac[right]
         ac[right] = old_left
     })
@@ -68,14 +68,14 @@ pub proc iter(a) = 0..length(a)
     |> map(|i| a[i])
 
 pub proc collect(i) {
-    var dest = Vector::new()
+    val dest = Vector::new()
     i |> for_each(|e| dest .> push(e))
     return dest.content
         |> subarray_until(dest.size)
 }
 
 pub proc sorted(a, comp) {
-    var ac = a |> clone()
+    val ac = a |> clone()
     quicksort(ac, 0, length(ac), comp)
     return ac
 }
