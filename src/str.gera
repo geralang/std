@@ -278,3 +278,7 @@ pub proc parse_flt(source) {
 pub proc repeat(repeated, times) = repeat_over(|| repeated)
     |> take(times)
     |> join("")
+
+pub proc replace(src, replaced, replacement) = src
+    |> split(replaced)
+    |> join(replacement)
