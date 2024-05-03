@@ -120,7 +120,7 @@ pub proc enumerate(iter) {
     return iter |> map(|v| {
         val ci = i
         i = i + 1
-        return { idx = ci, val = v }
+        return { index = ci, value = v }
     })
 }
 
