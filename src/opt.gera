@@ -1,8 +1,9 @@
-
+/// This module contains procedures for working with optional values.
 mod std::opt
 
 use std::iter
 
+/// Returns `true` if `optional` has a value.
 pub proc is_some(optional) {
     case optional {
         #some -> return true
@@ -10,13 +11,16 @@ pub proc is_some(optional) {
     }
 }
 
+/// Returns `true` if `optional` does not have a value.
 pub proc is_none(optional) {
     case optional {
-        #some -> return false
         #none -> return true
+        #some -> return false
     }
 }
 
+/// Returns a new optional value by passing the value possibly contained by
+/// `optional` to `mapping`.
 pub proc map(optional, mapping) {
     case optional {
         #some value -> return #some mapping(value)
@@ -24,6 +28,8 @@ pub proc map(optional, mapping) {
     }
 }
 
+/// Returns either the value contained by `optional`
+/// or `default` if `optional` does not contain any.
 pub proc unwrap_or(optional, default) {
     case optional {
         #some value -> return value
@@ -31,6 +37,8 @@ pub proc unwrap_or(optional, default) {
     }
 }
 
+/// Returns either the value contained by `optional` or the value returned
+/// by `f` if `optional` does not contain any.
 pub proc unwrap_or_else(optional, f) {
     case optional {
         #some value -> return value
@@ -38,22 +46,26 @@ pub proc unwrap_or_else(optional, f) {
     }
 }
 
-pub proc expect(optional, reason) {
-    case optional {
-        #some value -> return value
-        #none -> return panic(reason)
-    }
-}
+/// Returns the value contained by `optional`.
+/// This procedure shall be used if there is good reason to assume that
+/// `optional` will *always* contain a value, and the reasoning for this
+/// shall be passed for `reason`.
+/// If `optional` does not contain a value, the a panic with the
+/// given message `reason` will be triggered.
+pub proc expect(optional, reason) = optional
+    |> unwrap_or_else(|| panic(reason))
 
-pub proc iter(optional) {
-    return optional
-        |> map(|v| iter::over_value(v))
-        |> unwrap_or_else(|| iter::empty())
-}
+/// Returns an iterator that returns the value contained by `optional` once.
+/// If `optional` does not contain a value, an empty iterator is returned.
+pub proc iter(optional) = optional
+    |> map(-> iter::iter_value(it))
+    |> unwrap_or(iter::empty())
 
+/// Given that `optional` optionally contains another optional value,
+/// the underlying optional value is returned.
 pub proc flatten(optional) {
     case optional {
-        #none -> return #none unit
         #some nested_optional -> return nested_optional
+        #none -> return #none unit
     }
 }

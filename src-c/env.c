@@ -4,22 +4,23 @@
 #include <stdlib.h>
 
 
-static void free_string_array(char* data, size_t size) {
-    GeraString* items = (GeraString*) data;
-    size_t length = size / sizeof(GeraString);
+static void free_string_array(GeraAllocation* allocation) {
+    gera___begin_read(allocation);
+    GeraString* items = (GeraString*) allocation->data;
+    size_t length = allocation->size / sizeof(GeraString);
     for(size_t i = 0; i < length; i += 1) {
-        gera___rc_decr(items[i].allocation);
+        gera___ref_deleted(items[i].allocation);
     }
+    gera___end_read(allocation);
 }
 
 
 GeraArray gera_std_env_args() {
     size_t buffer_size = GERA_ARGS.length * sizeof(GeraString);
-    GeraAllocation* alloc = gera___rc_alloc(buffer_size, &free_string_array);
-    memcpy(alloc->data, GERA_ARGS.data, buffer_size);
+    GeraAllocation* alloc = gera___alloc(buffer_size, &free_string_array);
+    memcpy(alloc->data, GERA_ARGS.allocation->data, buffer_size);
     return (GeraArray) {
         .allocation = alloc,
-        .data = alloc->data,
         .length = GERA_ARGS.length
     };
 }
@@ -40,7 +41,7 @@ GeraArray gera_std_env_args() {
         for(LPSTR var = (LPSTR) vars_block; *var != '\0'; var += lstrlenA(var) + 1) {
             var_count += 1;
         }
-        GeraAllocation* alloc = gera___rc_alloc(
+        GeraAllocation* alloc = gera___alloc(
             sizeof(GeraString) * var_count, &free_string_array
         );
         GeraString* var_names = (GeraString*) alloc->data;
@@ -56,8 +57,8 @@ GeraArray gera_std_env_args() {
                 if(c == '\0') { break; }
                 var_length_bytes += gera___codepoint_size(c);
             }
-            GeraAllocation* var_alloc = gera___rc_alloc(
-                var_length_bytes, &gera___free_nothing
+            GeraAllocation* var_alloc = gera___alloc(
+                var_length_bytes, NULL
             );
             memcpy(var_alloc->data, var_name_nt, var_length_bytes);
             var_names[result_size] = (GeraString) {
@@ -71,7 +72,6 @@ GeraArray gera_std_env_args() {
         FreeEnvironmentStringsA(vars_block);
         return (GeraArray) {
             .allocation = alloc,
-            .data = alloc->data,
             .length = result_size
         };
     }
@@ -79,6 +79,7 @@ GeraArray gera_std_env_args() {
 
     gint gera_std_env_run(GeraString command) {
         GERA_STRING_NULL_TERM(command, command_nt);
+        gera___ref_deleted(command.allocation);
         STARTUPINFO sinfo;
         PROCESS_INFORMATION pinfo;
         ZeroMemory(&pinfo, sizeof(pinfo));
@@ -105,7 +106,7 @@ GeraArray gera_std_env_args() {
     GeraArray gera_std_env_vars() {
         size_t var_count = 0;
         for(; environ[var_count] != NULL; var_count += 1);
-        GeraAllocation* alloc = gera___rc_alloc(
+        GeraAllocation* alloc = gera___alloc(
             sizeof(GeraString) * var_count, &free_string_array
         );
         GeraString* var_names = (GeraString*) alloc->data;
@@ -121,8 +122,8 @@ GeraArray gera_std_env_args() {
                 if(c == '\0') { break; }
                 var_length_bytes += gera___codepoint_size(c);
             }
-            GeraAllocation* var_alloc = gera___rc_alloc(
-                var_length_bytes, &gera___free_nothing
+            GeraAllocation* var_alloc = gera___alloc(
+                var_length_bytes, NULL
             );
             memcpy(var_alloc->data, var_name_nt, var_length_bytes);
             var_names[result_size] = (GeraString) {
@@ -134,7 +135,6 @@ GeraArray gera_std_env_args() {
         }
         return (GeraArray) {
             .allocation = alloc,
-            .data = alloc->data,
             .length = result_size
         };
     }
@@ -142,6 +142,7 @@ GeraArray gera_std_env_args() {
 
     gint gera_std_env_run(GeraString command) {
         GERA_STRING_NULL_TERM(command, command_nt);
+        gera___ref_deleted(command.allocation);
         int exit_code = system(command_nt);
         if(exit_code == -1) { gera___panic("Unable to execute system command!"); }
         return (gint) WEXITSTATUS(exit_code);

@@ -1,14 +1,17 @@
-
+/// This module contains procedures for assertions
+/// to be used when writing tests. 
 mod std::test
 
 use std::str::fmt
 
+/// Triggers a panic if `condition` is `false`.
 pub proc assert(condition) {
     case condition -> return unit
     "Assertion failed"
         |> panic()
 }
 
+/// Triggers a panic if `a` is not equal to `b`.
 pub proc assert_eq(a, b) {
     case a == b -> return unit
     "Assertion failed: _ == _"
@@ -16,6 +19,7 @@ pub proc assert_eq(a, b) {
         |> panic()
 }
 
+/// Triggers a panic of `a` is equal to `b`.
 pub proc assert_ne(a, b) {
     case a != b -> return unit
     "Assertion failed: _ != _"

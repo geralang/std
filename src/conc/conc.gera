@@ -1,2 +1,2 @@
-
+/// Provides various concurrency primitives.
 mod std::conc

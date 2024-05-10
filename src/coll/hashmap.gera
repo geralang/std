@@ -1,59 +1,57 @@
-
+/// Provides a simple hash map implementation.
 mod std::coll::HashMap
 
-use std::(iter, math, opt)
+use std::math::abs
+use std::iter::*
+use std::opt::*
 
-proc choose_bucket(key_hash, capacity) {
-    return math::abs(key_hash % capacity)
-}
+proc choose_bucket(key_hash, capacity) = abs(key_hash % capacity)
 
 proc iter_nodes(start_node) {
-    mut var current_node = start_node
+    mut current_node = start_node
     return || {
         case current_node {
-            #none -> return #end unit
             #some node -> {
                 current_node = node.next
                 return #next node
             }
-        }
+        } else return #end unit
     }
 }
 
-var INITIAL_SIZE = 16
+val INITIAL_SIZE = 16
 
-pub proc new() {
-    return with_capacity(INITIAL_SIZE)
-}
+/// Creates and returns a new hash map with an intitial capacity of 16.
+pub proc new() = with_capacity(INITIAL_SIZE)
 
-proc with_capacity(initial_capacity) { return {
+proc with_capacity(initial_capacity) = {
     hasher = |v| hash(v),
-    buckets = array(#none unit, initial_capacity),
+    buckets = [#none unit; initial_capacity],
     load_factor = 0.75,
     size = 0,
 
     grow = |self, capacity| {
         case length(self.buckets) >= capacity -> return self
-        var old_values = self .> iter()
-        self.buckets = array(#none unit, capacity)
-        old_values |> iter::for_each(|v|
+        val old_values = self .> iter()
+        self.buckets = [#none unit; capacity]
+        old_values |> for_each(|v|
             self .> set(v.key, v.value)
         )
         return self
     },
 
     set = |self, key, value| {
-        var key_hash = key |> self.hasher()
-        var bucket_idx = key_hash |> choose_bucket(length(self.buckets))
+        val key_hash = key |> self.hasher()
+        val bucket_idx = key_hash |> choose_bucket(length(self.buckets))
         case self.buckets[bucket_idx]
             |> iter_nodes()
-            |> iter::find(|node| node.key_hash == key_hash) {
+            |> find(|node| node.key_hash == key_hash) {
             #some node -> {
                 node.key = key
                 node.value = value
             }
             #none -> {
-                var first_node = self.buckets[bucket_idx]
+                val first_node = self.buckets[bucket_idx]
                 self.buckets[bucket_idx] = #some {
                     key_hash = key_hash,
                     key = key,
@@ -61,7 +59,7 @@ proc with_capacity(initial_capacity) { return {
                     next = first_node
                 }
                 self.size = self.size + 1
-                var max_size = as_flt(length(self.buckets)) * self.load_factor
+                val max_size = as_flt(length(self.buckets)) * self.load_factor
                     |> as_int()
                 case self.size > max_size
                     -> self .> grow(length(self.buckets) * 2)
@@ -71,24 +69,24 @@ proc with_capacity(initial_capacity) { return {
     },
 
     at = |self, key| {
-        var key_hash = key |> self.hasher()
-        var bucket_idx = key_hash |> choose_bucket(length(self.buckets))
+        val key_hash = key |> self.hasher()
+        val bucket_idx = key_hash |> choose_bucket(length(self.buckets))
         return self.buckets[bucket_idx]
             |> iter_nodes()
-            |> iter::find(|node| node.key_hash == key_hash)
-            |> opt::map(|node| node.value)
+            |> find(|node| node.key_hash == key_hash)
+            |> map(|node| node.value)
     },
 
     has = |self, key| self .> at(key)
-        |> opt::is_some(),
+        |> is_some(),
 
     remove = |self, key| {
-        var key_hash = key |> self.hasher()
-        var bucket_idx = key_hash |> choose_bucket(length(self.buckets))
+        val key_hash = key |> self.hasher()
+        val bucket_idx = key_hash |> choose_bucket(length(self.buckets))
         return self.buckets[bucket_idx]
             |> iter_nodes()
-            |> iter::find(|node| node.key_hash == key_hash)
-            |> opt::map(|node| {
+            |> find(|node| node.key_hash == key_hash)
+            |> map(|node| {
                 self.buckets[bucket_idx] = node.next
                 self.size = self.size - 1
                 return node.value
@@ -96,24 +94,23 @@ proc with_capacity(initial_capacity) { return {
     },
 
     iter = |self| {
-        var buckets = self.buckets
-        mut var bucket_idx = 0
-        mut var current_node = #none unit
+        val buckets = self.buckets
+        mut bucket_idx = 0
+        mut current_node = #none unit
         return || {
-            var node
+            val node
             case current_node {
-                #none -> {
-                    bucket_idx = (bucket_idx + 1)..length(buckets)
-                        |> iter::find(|i| buckets[i] |> opt::is_some())
-                        |> opt::unwrap_or(length(buckets))
-                    case bucket_idx >= length(buckets)
-                        -> return #end unit
-                    node = buckets[bucket_idx]
-                        |> opt::expect("Just checked above!")
-                }
                 #some n -> node = n
+            } else {
+                bucket_idx = (bucket_idx + 1)..length(buckets)
+                    |> find(|i| buckets[i] |> is_some())
+                    |> unwrap_or(length(buckets))
+                case bucket_idx >= length(buckets)
+                    -> return #end unit
+                node = buckets[bucket_idx]
+                    |> expect("Just checked above!")
             }
-            var entry = { key = node.key, value = node.value }
+            val entry = { key = node.key, value = node.value }
             current_node = node.next
             return #next entry
         }
@@ -121,20 +118,22 @@ proc with_capacity(initial_capacity) { return {
 
     iter_keys = |self| self
         .> iter()
-        |> iter::map(|v| v.key),
+        |> map(|v| v.key),
 
     iter_values = |self| self
         .> iter()
-        |> iter::map(|v| v.value),
+        |> map(|v| v.value),
 
     clone = |self| self
         .> iter()
-        |> collect(),
+        |> collect()
 
-} }
+}
 
+/// Creates and returns a new hash map and collects all `key` - `value`
+/// pair objects from the given iterator `from_iter` into it.
 pub proc collect(from_iter) {
-    var dest = new()
-    from_iter |> iter::for_each(|v| dest .> set(v.key, v.value))
+    val dest = new()
+    from_iter |> for_each(|v| dest .> set(v.key, v.value))
     return dest
 }

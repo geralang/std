@@ -1,61 +1,72 @@
-
+/// This module contains procedures for working with iterators.
 mod std::iter
 
 use std::opt
 
-pub proc map(iter, mapping) {
-    return || {
+/// Returns a new iterator over the items of `iter`,
+/// where each item is mapped to the result of calling `mapping` with the item. 
+pub proc map(iter, mapping) = || {
+    case iter() {
+        #next n -> return #next mapping(n)
+        #end -> return #end unit
+    }
+}
+
+/// Returns a new iterator over the items of `iter`,
+/// only including the items for which `condition` returns true. 
+pub proc filter(iter, condition) = || {
+    mut result = #end unit
+    exhaust(|| {
+        val current
         case iter() {
+            #next n -> current = n
             #end -> return #end unit
-            #next n -> return #next mapping(n)
         }
-    }
+        case condition(current) -> {
+            result = #next current
+            return #end unit
+        }
+        return #next unit
+    })
+    return result
 }
 
-pub proc filter(iter, condition) {
-    return || {
-        var result = { val = #end unit }
-        exhaust(|| {
-            var current
-            case iter() {
-                #end -> return #end unit
-                #next n -> current = n
-            }
-            case condition(current) -> {
-                result.val = #next current
-                return #end unit
-            }
-            return #next unit
-        })
-        return result.val
-    }
-}
-
+/// Starting with the current value being `initial`,
+/// fully exhausts the iterator `iter`, passing the current value
+/// (first argument) and the current item from `iter` (second argument)
+/// to `reduction`, making the result the new current value.
+/// After the end of `iter` has been reached, the current value is returned.
 pub proc reduce(iter, reduction, initial) {
-    var value = { val = initial }
-    iter |> map(|v| {
-        value.val = reduction(value.val, v)
+    mut acc = initial
+    iter |> map(-> {
+        acc = reduction(acc, it)
     }) |> exhaust()
-    return value.val
+    return acc
 }
 
+/// Returns a new iterator over the items in `iter`.
+/// Ends if either the end of `iter` has been reached or
+/// `n` elements have been taken from `iter`.
 pub proc take(iter, n) {
-    var taken = { count = 0 }
+    mut i = 0
     return || {
-        case taken.count >= n -> return #end unit
-        taken.count = taken.count + 1
+        case i >= n -> return #end unit
+        i = i + 1
         return iter()
     }
 }
 
+/// Returns a new iterator over the items in `iter`.
+/// Ends if either the end of `iter` has been reached or
+/// the function `cond` returns `false` when being passed the current item. 
 pub proc take_while(iter, cond) {
-    mut var done = false
+    mut done = false
     return || {
         case done -> return #end unit
-        var value
+        val value
         case iter() {
-            #end -> return #end unit
             #next n -> value = n
+            #end -> return #end unit
         }
         case cond(value) -> return #next value
         done = true
@@ -63,90 +74,107 @@ pub proc take_while(iter, cond) {
     }
 }
 
+/// Takes and discards the next `n` elements from `iter`, returning `iter`.
 pub proc skip(iter, n) {
     iter |> take(n) |> exhaust()
     return iter
 }
 
-pub proc for_each(iter, action) {
-    iter |> map(action) |> exhaust()
+/// Calls `action` for each item in `iter`.
+/// Returns when the end of `iter` has been reached.
+pub proc for_each(iter, action) = iter
+    |> map(action)
+    |> exhaust()
+
+/// Returns a new iterator where each item in the sequence is the result of
+/// calling `combinator` with the next items from `iter_a` and `iter_b`.
+/// The iterator ends if either `iter_a` or `iter_b` end.
+pub proc zip(iter_a, iter_b, combinator) = || {
+    val val_a
+    case iter_a() {
+        #next v -> val_a = v
+        #end -> return #end unit
+    }
+    val val_b
+    case iter_b() {
+        #next v -> val_b = v
+        #end -> return #end unit
+    }
+    return #next combinator(val_a, val_b)
 }
 
-pub proc zip(iter_a, iter_b, combinator) {
-    return || {
-        var val_a
-        case iter_a() {
-            #end -> return #end unit
-            #next v -> val_a = v
-        }
-        var val_b
-        case iter_b() {
-            #end -> return #end unit
-            #next v -> val_b = v
-        }
-        return #next combinator(val_a, val_b)
+/// Returns a new iterator over the items of `iter_a`.
+/// If the end of `iter_a` is reached,
+/// the returned iterator will instead iterate over the items of `iter_b`.
+/// The iterator ends if the ends of both `iter_a` and `iter_b` are reached.
+pub proc chain(iter_a, iter_b) = || {
+    case iter_a() {
+        #next n -> return #next n
+        #end -> return iter_b()
     }
 }
 
-pub proc chain(iter_a, iter_b) {
-    return || {
-        case iter_a() {
-            #next n -> return #next n
-            #end -> {}
-        }
-        return iter_b()
-    }
-}
+/// Takes all items from `iter`, counting and returning the number of taken
+/// elements from `iter` when the end is reached.
+pub proc count(iter) = iter
+    |> reduce(|count, e| count + 1, 0)
 
-pub proc count(iter) {
-    return iter
-        |> reduce(|count, e| count + 1, 0)
-}
-
+/// Takes and returns the next item from `iter`.
 pub proc next(iter) {
     case iter() {
-        #end -> return #none unit
         #next v -> return #some v
+        #end -> return #none unit
     }
 }
 
+/// Takes all items from `iter`, returning the last taken item
+/// when the end is reached.
 pub proc last(iter) {
-    var result = { value = #none unit }
+    mut result = #none unit
     iter |> for_each(|v| {
-        result.value = #some v
+        result = #some v
     })
-    return result.value
+    return result
 }
 
-pub proc find(iter, condition) {
-    return iter |> filter(condition) |> next()
-}
+/// Takes items from `iter` until `condition` returns `true` for a taken
+/// item or the end of `iter` has been reached.
+/// Returns the item for which `condition` returned `true`.
+pub proc find(iter, condition) = iter
+    |> filter(condition)
+    |> next()
 
-pub proc find_last(iter, condition) {
-    return iter |> filter(condition) |> last()
-}
+/// Takes all items from `iter`, returning the last taken item for which
+/// `condition` returned `true` when the end is reached.
+pub proc find_last(iter, condition) = iter
+    |> filter(condition)
+    |> last()
 
+/// Returns a new iterator where each item is an object holding the next taken
+/// item from `iter` and the number of items that were taken from `iter`
+/// before it. The returned iterator ends when the end of
+/// `iter` has been reached.
 pub proc enumerate(iter) {
-    mut var i = 0
+    mut i = 0
     return iter |> map(|v| {
-        var ci = i
+        val ci = i
         i = i + 1
-        return { idx = ci, val = v }
+        return { index = ci, value = v }
     })
 }
 
-pub proc has(iter, element) {
-    return iter
-        |> find(|e| e == element)
-        |> opt::is_some()
-}
+/// Takes items from `iter` until it finds one that is equal to `element`
+/// or the end is reached. Returns `true` if an element has been found. 
+pub proc has(iter, element) = iter
+    |> find(|e| e == element)
+    |> opt::is_some()
 
-pub proc empty() {
-    return || #end unit
-}
+/// Returns an iterator without any elements.
+pub proc empty() = || #end unit
 
-pub proc over_value(v) {
-    mut var done = false
+/// Returns an iterator that only returns `v` once.
+pub proc iter_value(v) {
+    mut done = false
     return || {
         case done -> return #end unit
         done = true
@@ -154,8 +182,6 @@ pub proc over_value(v) {
     }
 }
 
-pub proc repeat_over(f) {
-    return || {
-        return #next f()
-    }
-}
+/// Returns an infinite iterator with each item in the sequence being the result
+/// of calling `f`.
+pub proc repeat_over(f) = || #next f()

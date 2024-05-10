@@ -1,5 +1,5 @@
-name = "gerastd"
-description = "The standard library for the Gera programming language."
+name = "std"
+description = "The standard library."
 authors = ["TypeSafeSchwalbe"]
 version = "0.1"
 target = "any"

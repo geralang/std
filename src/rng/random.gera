@@ -1,11 +1,17 @@
-
+/// Provides an implementation of a simple random number generator.
 mod std::rng::Random
 
-use std::(math, str, time, iter)
+use std::time
+use std::iter
+use std::str::fmt
+use std::time::now_local
+use std::math::*
 
-var LCG_MULTIPLIER = 6364136223846793005
-var LCG_INCREMENT = 1442695040888963407
+val LCG_MULTIPLIER = 6364136223846793005
+val LCG_INCREMENT = 1442695040888963407
 
+/// Creates a new semi-random deterministic number generator,
+/// intialized with the integer `seed`. 
 pub proc new(seed) { return {
     state = seed,
 
@@ -15,25 +21,23 @@ pub proc new(seed) { return {
     },
 
     int = |self| {
-        var r = self.state
+        val r = self.state
             * LCG_MULTIPLIER
             + LCG_INCREMENT
         self.state = r
         return r
     },
 
-    flt = |self| {
-        return as_flt(self .> int() |> math::abs())
-            / as_flt(math::INT_MAX)
-    },
+    flt = |self| as_flt(self .> int() |> abs())
+        / as_flt(INT_MAX),
 
     int_in = |self, min, max| {
         case min > max
             -> "The minimum (_) is larger than the maximum (_)!"
-                |> str::fmt([min |> as_str(), max |> as_str()])
+                |> fmt([min |> as_str(), max |> as_str()])
                 |> panic()
-        var range = max - min + 1
-        var r = self .> int() |> math::abs()
+        val range = max - min + 1
+        val r = self .> int() |> abs()
         case range <= 0 -> return r // this can only happen if the range is too big
         return min + r % range
     },
@@ -41,16 +45,16 @@ pub proc new(seed) { return {
     flt_in = |self, min, max| {
         case min > max
             -> "The minimum (_) is larger than the maximum (_)!"
-                |> str::fmt([min |> as_str(), max |> as_str()])
+                |> fmt([min |> as_str(), max |> as_str()])
                 |> panic()
-        var range = max - min
-        var r = self .> flt()
+        val range = max - min
+        val r = self .> flt()
         return min + r * range
     },
 
     choice = |self, src| {
         case length(src) == 0 -> panic("Source array is empty!")
-        var item = src[self .> int_in(0, length(src) - 1)]
+        val item = src[self .> int_in(0, length(src) - 1)]
         return item
     },
 
@@ -60,42 +64,55 @@ pub proc new(seed) { return {
     }
 } }
 
-// var GLOBAL_GEN = new(0)
-// var GLOBAL_GEN_INFO = { seeded = false }
+val GLOBAL_GEN = new(0)
+val GLOBAL_GEN_INFO = { seeded = false }
 
-// proc init_global_gen() {
-//     case !GLOBAL_GEN_INFO.seeded -> {
-//         GLOBAL_GEN .> seed(time::now_local())
-//         GLOBAL_GEN_INFO.seeded = true
-//     }
-// }
+proc init_global_gen() {
+    case !GLOBAL_GEN_INFO.seeded -> {
+        GLOBAL_GEN .> seed(time::now_local())
+        GLOBAL_GEN_INFO.seeded = true
+    }
+}
 
-// pub proc int() {
-//     init_global_gen()
-//     return GLOBAL_GEN .> int()
-// }
+/// Generates and returns a random integer,
+/// advancing the state of the global generator. 
+pub proc int() {
+    init_global_gen()
+    return GLOBAL_GEN .> int()
+}
 
-// pub proc flt() {
-//     init_global_gen()
-//     return GLOBAL_GEN .> flt()
-// }
+/// Generates and returns a random float,
+/// advancing the state of the global generator. 
+pub proc flt() {
+    init_global_gen()
+    return GLOBAL_GEN .> flt()
+}
 
-// pub proc int_in(min, max) {
-//     init_global_gen()
-//     return GLOBAL_GEN .> int_in(min, max)
-// }
+/// Generates and returns a random integer (at least `min` and at most `max`),
+/// advancing the state of the global generator. 
+pub proc int_in(min, max) {
+    init_global_gen()
+    return GLOBAL_GEN .> int_in(min, max)
+}
 
-// pub proc flt_in(min, max) {
-//     init_global_gen()
-//     return GLOBAL_GEN .> flt_in(min, max)
-// }
+/// Generates and returns a random float (at least `min` and at most `max`),
+/// advancing the state of the global generator. 
+pub proc flt_in(min, max) {
+    init_global_gen()
+    return GLOBAL_GEN .> flt_in(min, max)
+}
 
-// pub proc choice(array) {
-//     init_global_gen()
-//     return GLOBAL_GEN .> choice(array)
-// }
+/// Picks and returns a random item from the array `src`,
+/// advancing the state of the global generator. 
+pub proc choice(array) {
+    init_global_gen()
+    return GLOBAL_GEN .> choice(array)
+}
 
-// pub proc sample(array) {
-//     init_global_gen()
-//     return GLOBAL_GEN .> sample(array)
-// }
+/// Returns a new infinite iterator where for each item in the iterator
+/// it picks a random item from the array `src`,
+/// advancing the state of the global generator every time. 
+pub proc sample(array) {
+    init_global_gen()
+    return GLOBAL_GEN .> sample(array)
+}

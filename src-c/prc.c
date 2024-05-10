@@ -10,19 +10,13 @@ void gera_std_prc_exit(gint code) {
 }
 
 
-typedef GERA_CLOSURE_NOARGS(gint) ProcessHandle;
+#define GET_HANDLE_ID(closure) \
+    GERA_CLOSURE_CALL_NOARGS(closure, GERA_CLOSURE_FPTR_NOARGS(closure, gint))
 
-typedef struct ProcessExitCodeResult {
-    gbool has_error;
-    gbool has_value;
-    GeraString error;
-    gint value;
-} ProcessExitCodeResult;
-
-typedef struct ProcessStatus {
+typedef struct {
     gbool is_finished;
     gint exit_code;
-} ProcessStatus;
+} ProcessStatusLayout;
 
 static gbool HAS_PROCESS_STORAGE = 0;
 static Storage PROCESS_STORAGE;
@@ -58,8 +52,8 @@ gint process_handle_get(GeraAllocation* captures) {
         PIPE stdin_pipe;
     } ProcessEntry;
 
-    void process_handle_free(char* data, size_t size) {
-        size_t id = *((size_t*) data);
+    void process_handle_free(GeraAllocation* allocation) {
+        size_t id = *((size_t*) allocation->data);
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
         mutex_free(&process_entry->mutex);
         CloseHandle(process_entry->pi.hProcess);
@@ -73,7 +67,7 @@ gint process_handle_get(GeraAllocation* captures) {
         storage_remove(&PROCESS_STORAGE, id);
     }
 
-    ProcessHandle gera_std_prc_run(GeraString program, GeraArray args) {
+    GeraClosure gera_std_prc_run(GeraString program, GeraArray args) {
         init_process_storage();
         size_t id = storage_insert(&PROCESS_STORAGE, NULL);
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
@@ -84,7 +78,8 @@ gint process_handle_get(GeraAllocation* captures) {
         init_pipe(&process_entry->stderr_pipe);
         init_pipe(&process_entry->stdin_pipe);
         ZeroMemory(&process_entry->pi, sizeof(process_entry->pi));
-        GeraString* args_str = (GeraString*) args.data;
+        gera___begin_read(args.allocation);
+        GeraString* args_str = (GeraString*) args.allocation->data;
         size_t command_length = program.length_bytes;
         for(size_t arg_idx = 0; arg_idx < args.length; arg_idx += 1) {
             command_length += 1 + args_str[arg_idx].length_bytes;
@@ -99,6 +94,7 @@ gint process_handle_get(GeraAllocation* captures) {
             memcpy(command + arg_offset, arg.data, arg.length_bytes);
             arg_offset += arg.length_bytes;
         }
+        gera___end_read(args.allocation);
         STARTUPINFO si;
         ZeroMemory(&si, sizeof(si));
         si.cb = sizeof(si);
@@ -127,51 +123,56 @@ gint process_handle_get(GeraAllocation* captures) {
                 gera___panic("Unable to create a child process!");
             }
         }
-        GeraAllocation* allocation = gera___rc_alloc(
+        GeraAllocation* allocation = gera___alloc(
             sizeof(size_t), &process_handle_free
         );
         *((size_t*) allocation->data) = id;
         process_entry->handle_allocation = allocation;
-        return (ProcessHandle) {
-            .call = &process_handle_get,
-            .captures = allocation
+        gera___ref_deleted(program.allocation);
+        gera___ref_deleted(args.allocation);
+        return (GeraClosure) {
+            .body = &process_handle_get,
+            .allocation = allocation
         };
     }
 
-    void gera_std_prc_kill(ProcessHandle process_handle) {
+    void gera_std_prc_kill(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         if(process_entry->is_finished) {
             mutex_unlock(&process_entry->mutex);
+            gera___ref_deleted(process_handle.allocation);
             return;
         }
         TerminateProcess(process_entry->pi.hProcess, 0);
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
     }
 
-    void gera_std_prc_await(ProcessHandle process_handle) {
+    void gera_std_prc_await(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         if(process_entry->is_finished) {
             mutex_unlock(&process_entry->mutex);
+            gera___ref_deleted(process_handle.allocation);
             return;
         }
         if(WaitForSingleObject(
@@ -180,6 +181,7 @@ gint process_handle_get(GeraAllocation* captures) {
             gera___panic("Unable to await process completion!");
         }
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
     }
 
     static void wait_for_pipe(PIPE* pipe) {
@@ -196,44 +198,48 @@ gint process_handle_get(GeraAllocation* captures) {
         }
     }
 
-    void gera_std_prc_await_stdout(ProcessHandle process_handle) {
+    void gera_std_prc_await_stdout(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         if(process_entry->is_finished) {
             mutex_unlock(&process_entry->mutex);
+            gera___ref_deleted(process_handle.allocation);
             return;
         }
         wait_for_pipe(&process_entry->stdout_pipe);
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
     }
 
-    void gera_std_prc_await_stderr(ProcessHandle process_handle) {
+    void gera_std_prc_await_stderr(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         if(process_entry->is_finished) {
             mutex_unlock(&process_entry->mutex);
+            gera___ref_deleted(process_handle.allocation);
             return;
         }
         wait_for_pipe(&process_entry->stderr_pipe);
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
     }
 
     static GeraString read_string_from_pipe(PIPE* pipe) {
@@ -250,8 +256,8 @@ gint process_handle_get(GeraAllocation* captures) {
             };
         }
         size_t length_bytes = bytes_available;
-        GeraAllocation* allocation = gera___rc_alloc(
-            length_bytes, &gera___free_nothing
+        GeraAllocation* allocation = gera___alloc(
+            length_bytes, NULL
         );
         DWORD bytes_read;
         if(!ReadFile(
@@ -271,56 +277,60 @@ gint process_handle_get(GeraAllocation* captures) {
         };
     }
 
-    GeraString gera_std_prc_read_stdout(ProcessHandle process_handle) {
+    GeraString gera_std_prc_read_stdout(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         GeraString r = read_string_from_pipe(&process_entry->stdout_pipe);
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
         return r;
     }
 
-    GeraString gera_std_prc_read_stderr(ProcessHandle process_handle) {
+    GeraString gera_std_prc_read_stderr(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         GeraString r = read_string_from_pipe(&process_entry->stderr_pipe);
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
         return r;
     }
 
     void gera_std_prc_write_stdin(
-        ProcessHandle process_handle, GeraString text
+        GeraClosure process_handle, GeraString text
     ) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         if(process_entry->is_finished) {
             mutex_unlock(&process_entry->mutex);
+            gera___ref_deleted(process_handle.allocation);
+            gera___ref_deleted(text.allocation);
             return;
         }
         DWORD bytes_written;
@@ -331,27 +341,34 @@ gint process_handle_get(GeraAllocation* captures) {
             gera___panic("Unable to write to pipe!");
         }
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
+        gera___ref_deleted(text.allocation);
     }
 
-    ProcessStatus gera_std_prc_status(ProcessHandle process_handle) {
+    GeraObject gera_std_prc_status(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         if(process_entry->is_finished) {
             gint exit_code = process_entry->exit_code;
             mutex_unlock(&process_entry->mutex);
-            return (ProcessStatus) {
+            gera___ref_deleted(process_handle.allocation);
+            GeraAllocation* ra = gera___alloc(
+                sizeof(ProcessStatusLayout), NULL
+            );
+            *((ProcessStatusLayout*) ra->data) = (ProcessStatusLayout) {
                 .is_finished = 1,
                 .exit_code = exit_code
             };
+            return (GeraObject) { .allocation = ra };
         }
         DWORD exit_code;
         if(!GetExitCodeProcess(process_entry->pi.hProcess, &exit_code)) {
@@ -359,16 +376,20 @@ gint process_handle_get(GeraAllocation* captures) {
                 gera___panic("Unable to get the process exit code!");
             }
             mutex_unlock(&process_entry->mutex);
+            gera___ref_deleted(process_handle.allocation);
             return (ProcessStatus) {
                 .is_finished = 0,
                 .exit_code = -1
             };
         }
         mutex_unlock(&process_entry->mutex);
-        return (ProcessStatus) {
+        gera___ref_deleted(process_handle.allocation);
+        GeraAllocation* ra = gera___alloc(sizeof(ProcessStatusLayout), NULL);
+        *((ProcessStatusLayout*) ra->data) = (ProcessStatusLayout) {
             .is_finished = exit_code != STILL_ACTIVE,
             .exit_code = exit_code
         };
+        return (GeraObject) { .allocation = ra };
     }
 
 #else
@@ -389,8 +410,8 @@ gint process_handle_get(GeraAllocation* captures) {
         int stdin_pipe[2];
     } ProcessEntry;
 
-    void process_handle_free(char* data, size_t size) {
-        size_t id = *((size_t*) data);
+    void process_handle_free(GeraAllocation* allocation) {
+        size_t id = *((size_t*) allocation->data);
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
         mutex_free(&process_entry->mutex);
         close(process_entry->stdout_pipe[0]); // parent reads - close
@@ -416,9 +437,10 @@ gint process_handle_get(GeraAllocation* captures) {
         }
     }
 
-    ProcessHandle gera_std_prc_run(GeraString program, GeraArray args) {
+    GeraClosure gera_std_prc_run(GeraString program, GeraArray args) {
         GERA_STRING_NULL_TERM(program, program_nt);
-        GeraString* args_gs = (GeraString*) args.data;
+        gera___begin_read(args.allocation);
+        GeraString* args_gs = (GeraString*) args.allocation->data;
         char* args_nt[args.length + 2];
         args_nt[0] = program_nt;
         for(size_t ai = 0; ai < args.length; ai += 1) {
@@ -427,6 +449,7 @@ gint process_handle_get(GeraAllocation* captures) {
             arg_nt[args_gs[ai].length_bytes] = '\0';
             args_nt[ai + 1] = arg_nt;
         }
+        gera___end_read(args.allocation);
         int stdout_pipe[2];
         int stderr_pipe[2];
         int stdin_pipe[2];
@@ -465,7 +488,7 @@ gint process_handle_get(GeraAllocation* captures) {
         close(stderr_pipe[1]); // doesn't write
         close(stdin_pipe[0]); // doesn't read
         init_process_storage();
-        GeraAllocation* allocation = gera___rc_alloc(
+        GeraAllocation* allocation = gera___alloc(
             sizeof(size_t), &process_handle_free
         );
         ProcessEntry process_entry = (ProcessEntry) {
@@ -480,26 +503,29 @@ gint process_handle_get(GeraAllocation* captures) {
         memcpy(process_entry.stdin_pipe, stdin_pipe, sizeof(int) * 2);
         size_t id = storage_insert(&PROCESS_STORAGE, &process_entry);
         *((size_t*) allocation->data) = id;
-        return (ProcessHandle) {
-            .call = &process_handle_get,
-            .captures = allocation
+        gera___ref_deleted(program.allocation);
+        gera___ref_deleted(args.allocation);
+        return (GeraClosure) {
+            .body = &process_handle_get,
+            .allocation = allocation
         };
     }
 
-    void gera_std_prc_kill(ProcessHandle process_handle) {
+    void gera_std_prc_kill(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         if(process_entry->is_finished) {
             mutex_unlock(&process_entry->mutex);
+            gera___ref_deleted(process_handle.allocation);
             return;
         }
         if(kill(process_entry->os_id, SIGTERM) != 0) {
@@ -509,44 +535,48 @@ gint process_handle_get(GeraAllocation* captures) {
         pid_t result = waitpid(process_entry->os_id, &status, 0);
         update_status(process_entry, status, result);
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
     }
 
-    void gera_std_prc_await(ProcessHandle process_handle) {
+    void gera_std_prc_await(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         if(process_entry->is_finished) {
             mutex_unlock(&process_entry->mutex);
+            gera___ref_deleted(process_handle.allocation);
             return;
         }
         int status;
         pid_t result = waitpid(process_entry->os_id, &status, 0);
         update_status(process_entry, status, result);
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
     }
 
-    void gera_std_prc_await_stdout(ProcessHandle process_handle) {
+    void gera_std_prc_await_stdout(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         if(process_entry->is_finished) {
             mutex_unlock(&process_entry->mutex);
+            gera___ref_deleted(process_handle.allocation);
             return;
         }
         fd_set read_fds;
@@ -554,22 +584,24 @@ gint process_handle_get(GeraAllocation* captures) {
         FD_SET(process_entry->stdout_pipe[0], &read_fds);
         select(process_entry->stdout_pipe[0] + 1, &read_fds, NULL, NULL, NULL);
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
     }
 
-    void gera_std_prc_await_stderr(ProcessHandle process_handle) {
+    void gera_std_prc_await_stderr(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         if(process_entry->is_finished) {
             mutex_unlock(&process_entry->mutex);
+            gera___ref_deleted(process_handle.allocation);
             return;
         }
         fd_set read_fds;
@@ -577,6 +609,7 @@ gint process_handle_get(GeraAllocation* captures) {
         FD_SET(process_entry->stderr_pipe[0], &read_fds);
         select(process_entry->stderr_pipe[0] + 1, &read_fds, NULL, NULL, NULL);
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
     }
 
     static GeraString read_string_from_pipe(int pipe_read) {
@@ -601,8 +634,8 @@ gint process_handle_get(GeraAllocation* captures) {
                 gera___panic("Unable to reallocate buffer!");
             }
         }
-        GeraAllocation* allocation = gera___rc_alloc(
-            total_read, &gera___free_nothing
+        GeraAllocation* allocation = gera___alloc(
+            total_read, NULL
         );
         memcpy(allocation->data, buffer, total_read);
         free(buffer);
@@ -618,56 +651,60 @@ gint process_handle_get(GeraAllocation* captures) {
         };
     }
 
-    GeraString gera_std_prc_read_stdout(ProcessHandle process_handle) {
+    GeraString gera_std_prc_read_stdout(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         GeraString r = read_string_from_pipe(process_entry->stdout_pipe[0]);
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
         return r;
     }
 
-    GeraString gera_std_prc_read_stderr(ProcessHandle process_handle) {
+    GeraString gera_std_prc_read_stderr(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         GeraString r = read_string_from_pipe(process_entry->stderr_pipe[0]);
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
         return r;
     }
 
     void gera_std_prc_write_stdin(
-        ProcessHandle process_handle, GeraString text
+        GeraClosure process_handle, GeraString text
     ) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
         if(process_entry->is_finished) {
             mutex_unlock(&process_entry->mutex);
+            gera___ref_deleted(process_handle.allocation);
+            gera___ref_deleted(text.allocation);
             return;
         }
         if(write(
@@ -676,17 +713,19 @@ gint process_handle_get(GeraAllocation* captures) {
             gera___panic("Unable to write to pipe!");
         }
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
+        gera___ref_deleted(text.allocation);
     }
 
-    ProcessStatus gera_std_prc_status(ProcessHandle process_handle) {
+    GeraObject gera_std_prc_status(GeraClosure process_handle) {
         init_process_storage();
-        gint sid = process_handle.call(process_handle.captures);
+        gint sid = GET_HANDLE_ID(process_handle);
         size_t id = *((size_t*) &sid);
         if(id >= PROCESS_STORAGE.data_length) {
             gera___panic("The provided process handle is invalid!");
         }
         ProcessEntry* process_entry = storage_get(&PROCESS_STORAGE, id);
-        if(process_entry->handle_allocation != process_handle.captures) {
+        if(process_entry->handle_allocation != process_handle.allocation) {
             gera___panic("The provided process handle is invalid!");
         }
         mutex_lock(&process_entry->mutex);
@@ -695,11 +734,14 @@ gint process_handle_get(GeraAllocation* captures) {
             pid_t result = waitpid(process_entry->os_id, &status, WNOHANG);
             update_status(process_entry, status, result);
         }
-        ProcessStatus r = (ProcessStatus) {
+        GeraAllocation* ra = gera___alloc(sizeof(ProcessStatusLayout), NULL);
+        *((ProcessStatusLayout*) ra->data) = (ProcessStatusLayout) {
             .is_finished = process_entry->is_finished,
             .exit_code = process_entry->exit_code
         };
+        GeraObject r = (GeraObject) { .allocation = ra };
         mutex_unlock(&process_entry->mutex);
+        gera___ref_deleted(process_handle.allocation);
         return r;
     }
 #endif

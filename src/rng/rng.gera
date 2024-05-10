@@ -1,2 +1,2 @@
-
+/// Provides functionality related to random number generation.
 mod std::rng

@@ -1,11 +1,12 @@
-
+/// Provides a way to create and manage child processes.
 mod std::prc::Process
 
 use std::internal::prc::Process::*
-use std::opt
 
 target c {
-    pub proc new(program, arguments) { return {
+    /// Creates a new process running the program `program` with the arguments
+    /// `arguments`.
+    pub proc new(program, arguments) = {
         handle = internal_run(program, arguments),
 
         kill = |self| {
@@ -47,17 +48,18 @@ target c {
         },
         
         exit_code = |self| {
-            var status = internal_status(self.handle)
+            val status = internal_status(self.handle)
             case !status.is_finished -> return #none unit
             else return #some status.exit_code
         },
 
         is_done = |self| {
-            var status = internal_status(self.handle)
+            val status = internal_status(self.handle)
             return status.is_finished
         }
-    } }
+    }
 
+    /// Makes the program exit with status code `code`.
     pub proc exit(code) {
         internal_exit(code)
         return panic("called 'std::prc::Process::exit'")

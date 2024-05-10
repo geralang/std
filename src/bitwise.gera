@@ -1,2 +1,2 @@
-
+/// This module contains procedures for bitwise operations. 
 mod std::bw

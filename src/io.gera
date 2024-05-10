@@ -1,97 +1,107 @@
-
+/// This module contains procedures for writing to stdout and stderr,
+/// reading from stdin and interacting with the filesystem.
 mod std::io
 
-use core::*   // don't ask me why this is needed?
 use std::internal::io::*
-use std::res
+use std::res::*
 
-pub proc println(thing) {
-    thing |> as_str() |> internal_println()
-}
+/// Uses `core::as_str` to convert `thing` to its string representation 
+/// and then writes it to the standard output, followed by a new line. 
+pub proc println(thing) = thing
+    |> as_str()
+    |> internal_println()
 
-pub proc eprintln(thing) {
-    thing |> as_str() |> internal_eprintln()
-}
+/// Uses `core::as_str` to convert thing to its string representation
+/// and then writes it to the standard error output, followed by a new line. 
+pub proc eprintln(thing) = thing
+    |> as_str()
+    |> internal_eprintln()
 
 target c {
-    pub proc print(thing) {
-        thing |> as_str() |> internal_print()
-    }
+    /// Uses `core::as_str` to convert thing to its string representation,
+    /// and then writes it to the standard output,
+    /// **not followed by a new line**. 
+    pub proc print(thing) = thing
+        |> as_str()
+        |> internal_print()
 
-    pub proc eprint(thing) {
-        thing |> as_str() |> internal_eprint()
-    }
-
-    proc ioresult_as_result(value) {
-        case value.has_error -> return #err value.error
-        return #ok value.value
-    }
+    /// Uses `core::as_str` to convert thing to its string representation,
+    /// and then writes it to the standard error output,
+    /// **not followed by a new line**. 
+    pub proc eprint(thing) = thing
+        |> as_str()
+        |> internal_eprint()
 
     proc ioresult_as_empty_result(value) {
-        case value.has_error -> return #err value.error
+        case value.has_error -> return #err result::get_err(value)
         return #ok unit
     }
 
-    pub proc set_cwd(path) {
-        return internal_set_cwd(path)
-            |> ioresult_as_empty_result()
+    proc ioresult_as_str_result(value) {
+        case value.has_error -> return #err result::get_err(value)
+        return #ok result::get_str(value)
     }
 
-    pub proc get_cwd() {
-        return "."
-            |> canonicalize()
-            |> res::unwrap_or_else(|e|
-                panic("Unable to get the current working directory!")
-            )
+    proc ioresult_as_str_arr_result(value) {
+        case value.has_error -> return #err result::get_err(value)
+        return #ok result::get_str_arr(value)
     }
 
+    /// Sets the program's current working directory to `path`. 
+    pub proc set_cwd(path) = internal_set_cwd(path)
+        |> ioresult_as_empty_result()
 
-    pub proc file_exists(path) {
-        return internal_file_exists(path)
-    }
-
-    pub proc canonicalize(path) {
-        return internal_canonicalize(path)
-            |> ioresult_as_result()
-    }
-
-
-    pub proc is_dir(path) {
-        return internal_is_dir(path)
-    }
-
-    pub proc create_dir(path) {
-        return internal_create_dir(path)
-            |> ioresult_as_empty_result()
-    }
-
-    pub proc read_dir(path) {
-        return internal_read_dir(path)
-            |> ioresult_as_result()
-    }
-
-    pub proc delete_dir(path) {
-        return internal_delete_dir(path)
-            |> ioresult_as_empty_result()
-    }
+    /// Returns the program's current working directory as an absolute path. 
+    pub proc get_cwd() = "."
+        |> canonicalize()
+        |> expect("Unable to get the current working directory!")
 
 
-    pub proc is_file(path) {
-        return internal_is_file(path)
-    }
+    /// Returns `true` if there is a file or directory
+    /// at the path specified by `path`.
+    pub proc file_exists(path) = internal_file_exists(path)
 
-    pub proc write_file(content, path) {
-        return internal_write_file(content, path)
-            |> ioresult_as_empty_result()
-    }
+    /// Attempts to convert `path` to an absolute path
+    /// and returns the absolute path as a result with a string error. 
+    pub proc canonicalize(path) = internal_canonicalize(path)
+        |> ioresult_as_str_result()
 
-    pub proc read_file(path) {
-        return internal_read_file(path)
-            |> ioresult_as_result()
-    }
 
-    pub proc delete_file(path) {
-        return internal_delete_file(path)
-            |> ioresult_as_empty_result()
-    }
+    /// Returns true if there is a directory at the path specified by `path`.
+    pub proc is_dir(path) = internal_is_dir(path)
+
+    /// Attempts to create a new directory at the path specified by `path`.
+    pub proc create_dir(path) = internal_create_dir(path)
+        |> ioresult_as_empty_result()
+
+    /// Attemps to read the contents of the directory at the path `path`.
+    /// Returns a string array with the names of the files which are direct
+    /// children of the read directory. 
+    pub proc read_dir(path) = internal_read_dir(path)
+        |> ioresult_as_str_arr_result()
+
+    /// Attemps to delete the directory at the path `path`.
+    /// The deleted directory must be empty.
+    pub proc delete_dir(path) = internal_delete_dir(path)
+        |> ioresult_as_empty_result()
+
+
+    /// Returns true if there is a file (not a directory) at the path
+    /// specified by `path`.
+    pub proc is_file(path) = internal_is_file(path)
+
+    /// Attempts to write `content` as a UTF-8 string
+    /// to a file at the path `path`, creating a new file
+    /// or overwriting the existing one.
+    pub proc write_file(content, path) = internal_write_file(content, path)
+        |> ioresult_as_empty_result()
+
+    /// Attempts to read the contents of the file at the path `path`
+    /// as a UTF-8 string, returning the read content.
+    pub proc read_file(path) = internal_read_file(path)
+        |> ioresult_as_str_result()
+
+    /// Attempts to delete the file at the path `path`.
+    pub proc delete_file(path) = internal_delete_file(path)
+        |> ioresult_as_empty_result()
 }

@@ -1,32 +1,63 @@
-
+/// Returns e raised to the power of the given float. 
 proc std::math::exp(float) -> float = gera_std_math_exp
+/// Returns e raised to the power of the given float, subtracted by 1.
 proc std::math::expm1(float) -> float = gera_std_math_expm1
+/// Returns the natural logarithm (base e) of the given float. 
 proc std::math::log(float) -> float = gera_std_math_log
+/// Returns the base 10 logarithm of the given float. 
 proc std::math::log10(float) -> float = gera_std_math_log10
+/// Returns the base 2 logarithm of the given float. 
 proc std::math::log2(float) -> float = gera_std_math_log2
+/// Returns the natural logarithm (base e) of the given float plus 1. 
 proc std::math::log1p(float) -> float = gera_std_math_log1p
 
+/// Returns the first float raised to the power of the second.
 proc std::math::pow(float, float) -> float = gera_std_math_pow
+/// Returns the square root of the given float.
 proc std::math::sqrt(float) -> float = gera_std_math_sqrt
+/// Returns the cubic root of the given float.
 proc std::math::cbrt(float) -> float = gera_std_math_cbrt
+/// Returns the square root of the sum of the squares of the given floats.
 proc std::math::hypot(float, float) -> float = gera_std_math_hypot
 
+/// Returns the sin of the given float in radians.
 proc std::math::sin(float) -> float = gera_std_math_sin
+/// Returns the cosine of the given float in radians.
 proc std::math::cos(float) -> float = gera_std_math_cos
+/// Returns the tangent of the given float in radians.
 proc std::math::tan(float) -> float = gera_std_math_tan
+/// Returns the inverse sine of the given float in radians.
 proc std::math::asin(float) -> float = gera_std_math_asin
+/// Returns the inverse cosine of the given float in radians.
 proc std::math::acos(float) -> float = gera_std_math_acos
+/// Returns the inverse tangent of the given float in radians.
 proc std::math::atan(float) -> float = gera_std_math_atan
+/// Returns the angle in the plane in radians between the positive x-axis and
+// the ray from (0, 0) to the point specified by the two given floats.
 proc std::math::atan2(float, float) -> float = gera_std_math_atan2
 
+/// Returns the hyperbolic sine of the given float.
 proc std::math::sinh(float) -> float = gera_std_math_sinh
+/// Returns the hyperbolic cosine of the given float.
 proc std::math::cosh(float) -> float = gera_std_math_cosh
+/// Returns the hyperbolic tangent of the given float.
 proc std::math::tanh(float) -> float = gera_std_math_tanh
+/// Returns the inverse hyperbolic sine of the given float.
 proc std::math::asinh(float) -> float = gera_std_math_asinh
+/// Returns the inverse hyperbolic cosine of the given float.
 proc std::math::acosh(float) -> float = gera_std_math_acosh
+/// Returns the inverse hyperbolic tangent of the given float.
 proc std::math::atanh(float) -> float = gera_std_math_atanh
 
+/// Returns the given float rounded to the nearest integer
+/// towards positive infinity (rounding up).
 proc std::math::ceil(float) -> float = gera_std_math_ceil
+/// Returns the given float rounded to the nearest integer
+/// towards negative infinity (rounding down).
 proc std::math::floor(float) -> float = gera_std_math_floor
+/// Returns the given float rounded to the nearest integer
+/// towards zero (rounding up if negative and down if positive).
 proc std::math::trunc(float) -> float = gera_std_math_trunc
+/// Returns the given float rounded to the nearest integer
+/// (rounding to whatever integer is closest).
 proc std::math::round(float) -> float = gera_std_math_round

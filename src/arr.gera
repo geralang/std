@@ -1,18 +1,23 @@
-
+/// This module contains utilities for working with arrays. 
 mod std::arr
 
-use std::(str, iter, opt, sort)
+use std::str::fmt
+use std::sort::quicksort
 use std::coll::Vector
+use std::iter::*
 
+/// Returns a part of the array `a`, starting at the index `start
+/// and including all elements up to the index (not including) `end`.
+/// If `start` or `end` are negative, the length of `a` is added to them.
 pub proc subarray(a, start, end) {
-    mut var start_index = start
+    mut start_index = start
     case start < 0 -> start_index = length(a) + start
-    mut var end_index = end
+    mut end_index = end
     case end < 0 -> end_index = length(a) + end
     case start_index > end_index -> {
         "the start index _ is larger than \
 the end index _ (length of array is _)"
-            |> str::fmt([
+            |> fmt([
                 start_index |> as_str(),
                 end_index |> as_str(),
                 a |> length() |> as_str()
@@ -20,65 +25,81 @@ the end index _ (length of array is _)"
             |> panic()
     }
     case start_index == end_index -> return []
-    var dest_length = end_index - start_index
-    var dest = array(a[start_index], dest_length)
-    0..dest_length |> iter::for_each(|i| {
+    val dest_length = end_index - start_index
+    val dest = [a[start_index]; dest_length]
+    0..dest_length |> for_each(|i| {
         dest[i] = a[start_index + i]
     })
     return dest
 }
 
-pub proc subarray_until(a, end_index) {
-    return a |> subarray(0, end_index)
-}
+/// Returns a part of the array `a`, including all elements up to the index
+/// (not including) `end_index`.
+/// If `end_index` is negative, the length of `a` is added to it.
+pub proc subarray_until(a, end_index) = a
+    |> subarray(0, end_index)
 
-pub proc subarray_after(a, start_index) {
-    return a |> subarray(start_index, a |> length())
-}
+/// Returns a part of the array `a`, including all elements at and after the
+/// index `start_index`.
+/// If `start_index` is negative, the length of `a` is added to it.
+pub proc subarray_after(a, start_index) = a
+    |> subarray(start_index, a |> length())
 
+/// Creates a new array by appending all elements of the array `b`
+/// to the end of the array `a`. 
 pub proc concat(a, b) {
     case length(a) == 0 -> return b
     case length(b) == 0 -> return a
-    var r = array(a[0], length(a) + length(b))
-    0..length(a) |> iter::for_each(|i| {
+    val r = [a[0]; length(a) + length(b)]
+    0..length(a) |> for_each(|i| {
         r[i] = a[i]
     })
-    0..length(b) |> iter::for_each(|i| {
+    0..length(b) |> for_each(|i| {
         r[i + length(a)] = b[i]
     })
     return r
 }
 
-pub proc clone(a) {
-    return a |> subarray(0, a |> length())
-}
+/// Creates a shallow copy of the array `a`. 
+pub proc clone(a) = a
+    |> subarray(0, a |> length())
 
+/// Creates a new array by reversing the order of the elements in `a`. 
 pub proc reversed(a) {
-    var ac = a |> clone()
-    0..(length(ac) / 2) |> iter::for_each(|o| {
-        var left = o
-        var right = length(ac) - 1 - o
-        var old_left = ac[left]
+    val ac = a |> clone()
+    0..(length(ac) / 2) |> for_each(|o| {
+        val left = o
+        val right = length(ac) - 1 - o
+        val old_left = ac[left]
         ac[left] = ac[right]
         ac[right] = old_left
     })
     return ac
 }
 
-pub proc iter(a) {
-    return 0..length(a)
-        |> iter::map(|i| a[i])
-}
+/// Creates a new iterator over the elements in `a`. 
+pub proc iter(a) = 0..length(a)
+    |> map(|i| a[i])
 
+/// Collects all the elements from the iterator `i` into a new array.
+/// Make sure the passed iterator is finite if you want this procedure
+/// to return before the heat death of the universe.
 pub proc collect(i) {
-    var dest = Vector::new()
-    i |> iter::for_each(|e| dest .> push(e))
+    val dest = Vector::new()
+    i |> for_each(|e| dest .> push(e))
     return dest.content
         |> subarray_until(dest.size)
 }
 
+/// Uses `std::sort::quicksort` to return a new sorted shallow copy of `a`
+/// sorted according to the comparison function `comp`
+/// (see `std::sort::ascending` and `std::sort::descending`).
+/// `comp` must be a function that takes two array elements `a` and `b`
+/// to compare, returning eiter a
+/// number that is less than zero (placing `a` at an index lower than `b`) or a
+/// number that is greater than zero (placing `a` at an index higher than `b`).
 pub proc sorted(a, comp) {
-    var ac = a |> clone()
-    sort::quicksort(ac, 0, length(ac), comp)
+    val ac = a |> clone()
+    quicksort(ac, 0, length(ac), comp)
     return ac
 }

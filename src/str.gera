@@ -1,158 +1,178 @@
-
+/// This module contains procedures for working with strings.
+/// Just like `core::substring`, all indices are in unicode code points.
 mod std::str
 
-use std::(iter, opt, math, res)
+use std::iter::*
+use std::opt::*
+use std::math::*
+use std::res::*
 
-pub proc concat(a, b) {
-    return core::concat(a, b)
-}
+/// Returns the part of the string `s` starting at the index 0
+/// up to (not including) the index `end_index`.
+/// If `end_index` is negative, the length of `s` is added to it.
+pub proc substring_until(s, end_index) = s
+    |> substring(0, end_index)
 
-pub proc substring(s, start_idx, end_idx) {
-    return core::substring(s, start_idx, end_idx)
-}
+/// Returns the part of the string `s` starting at the index `start_index`
+/// up to the end of the string.
+/// If `start_index` is negative, the length of `s` is added to it.
+pub proc substring_after(s, start_index) = s
+    |> substring(start_index, s |> length())
 
-pub proc substring_until(s, end_index) {
-    return s |> substring(0, end_index)
-}
+/// Returns a new string, only containing the code point at the index `index`
+/// in the string `s`. If `index` is negative, the length of `s` is added to it.
+pub proc at(s, index) = s
+    |> substring(index, index + 1)
 
-pub proc substring_after(s, start_index) {
-    return s |> substring(start_index, s |> length())
-}
-
-pub proc at(s, index) {
-    return s |> substring(index, index + 1)
-}
-
+/// Returns `true` if the beginning of `s` fully matches `prefix`.
 pub proc starts_with(s, prefix) {
     case length(prefix) > length(s) -> return false
-    var compared_prefix = s
+    val compared_prefix = s
         |> substring_until(length(prefix))
     return compared_prefix == prefix
 }
 
+/// Returns `true` if the end of `s` fully matches `prefix`.
 pub proc ends_with(s, suffix) {
     case length(suffix) > length(s) -> return false
-    var compared_suffix = s
+    val compared_suffix = s
         |> substring_after(-length(suffix))
     return compared_suffix == suffix
 }
 
+/// Finds all occurances of `sub` in `s`, returning an iterator over the
+/// indices of the first code points of the occurances of `sub`.
 pub proc find(s, sub) {
-    var current = { index = 0 }
+    mut i = 0
     return || {
-        mut var found = { value = #end unit }
+        mut found = #end unit
         exhaust(|| {
-            case current.index > length(s) - length(sub) -> return #end unit
-            var c = current.index
-            current.index = current.index + 1
-            var compared_sub = s |> substring(c, c + length(sub))
+            case i > length(s) - length(sub) -> return #end unit
+            val c = i
+            i = i + 1
+            val compared_sub = s |> substring(c, c + length(sub))
             case compared_sub == sub -> {
-                found.value = #next c
+                found = #next c
                 return #end unit
             }
             return #next unit
         })
-        return found.value
+        return found
     }
 }
 
+/// Returns a new string with a minimum length of `target_length`, padded
+/// by repeating `padding` as many times as needed and appending it to the end
+/// of `s`.
+/// This means that if `padding` is more than one code point long, the returned
+/// string may be longer than `target_length`.
 pub proc pad_left(s, target_length, padding) {
-    var fill_length = target_length - length(s)
+    val fill_length = target_length - length(s)
     return padding
-        |> string(math::max(fill_length / length(padding), 0))
+        |> repeat(max(fill_length / length(padding), 0))
         |> concat(padding |> substring_until(fill_length % length(padding)))
         |> concat(s)
 }
 
+/// Returns a new string with a minimum length of `target_length`, padded
+/// by repeating `padding` as many times as needed and inserting it before the
+/// start of `s`.
+/// This means that if `padding` is more than one code point long, the returned
+/// string may be longer than `target_length`.
 pub proc pad_right(s, target_length, padding) {
-    var fill_length = target_length - length(s)
+    val fill_length = target_length - length(s)
     return s
-        |> concat(padding |> string(math::max(fill_length / length(padding), 0)))
+        |> concat(padding |> repeat(max(fill_length / length(padding), 0)))
         |> concat(padding |> substring_until(fill_length % length(padding)))
 }
 
+/// Returns a copy of `s`, replacing underscores in `s` with the corresponding
+/// elements in `v`.
+/// If the number of underscores in `s` is less than the number of elements in
+/// `v`, a panic will be triggered.
+/// Underscores for which there is no corresponding element in `v` will simply
+/// be left untouched.
 pub proc fmt(s, v) {
-    var current = { ci = 0, vi = 0, rs = s }
+    mut ci = 0
+    mut vi = 0
+    mut rs = s
     exhaust(|| {
-        case current.ci >= length(current.rs) -> return #end unit
-        case current.vi >= length(v) -> return #end unit
-        var ci = current.ci
-        case at(current.rs, ci) == "_" -> {
-            var inserted = v[current.vi]
-            current.rs = current.rs
+        case ci >= length(rs) -> return #end unit
+        case vi >= length(v) -> return #end unit
+        case at(rs, ci) == "_" -> {
+            val inserted = v[vi]
+            rs = rs
                 |> substring_until(ci)
                 |> concat(inserted)
-                |> concat(current.rs |> substring_after(ci + 1))
-            current.ci = ci + length(inserted)
-            current.vi = current.vi + 1
+                |> concat(rs |> substring_after(ci + 1))
+            ci = ci + length(inserted)
+            vi = vi + 1
         } else {
-            current.ci = ci + 1
+            ci = ci + 1
         }
         return #next unit
     })
-    case current.vi < length(v) -> {
-        "the format string '_' does not \
-contain enough underscores for _ value(s)"
-            |> fmt([s, v |> length() |> as_str()])
+    case vi < length(v) -> {
+        "the format string '" 
+            |> concat(s) 
+            |> concat("' does not contain enough underscores for ") 
+            |> concat(v |> length() |> as_str()) 
+            |> concat(" value(s)") 
             |> panic()
     }
-    return current.rs
+    return rs
 }
 
-pub proc split(s, separator) {
-    var current = {
-        anchor = 0,
-        done = false
-    }
-    var until_length = length(s) - length(separator)
+/// Splits `s` into parts separated by occurances of `sep`, returning an
+/// iterator over each part. 
+pub proc split(s, sep) {
+    mut anchor = 0
+    mut done = false
+    val until_length = length(s) - length(sep)
     return || {
-        case current.done -> return #end unit
-        var next_split
-        case current.anchor <= until_length
-            -> next_split = current.anchor..=until_length
-                |> iter::find(|index| 
-                    substring(s, index, index + length(separator)) == separator
-                ) 
+        case done -> return #end unit
+        val next_split
+        case anchor <= until_length
+            -> next_split = anchor..=until_length |> find(|index| 
+                substring(s, index, index + length(sep)) == sep
+            ) 
         else next_split = #none unit
         case next_split {
-            #none -> {
-                var result = s |> substring_after(
-                    math::min(current.anchor, length(s))
-                )
-                current.anchor = length(s)
-                current.done = true
+            #some i -> {
+                val result = s |> substring(anchor, i)
+                anchor = i + length(sep)
                 return #next result
             }
-            #some i -> {
-                var result = s |> substring(current.anchor, i)
-                current.anchor = i + length(separator)
+            #none -> {
+                val result = s |> substring_after(min(anchor, length(s)))
+                anchor = length(s)
+                done = true
                 return #next result
             }
         }
     }
 }
 
-pub proc join(strings, separator) {
-    mut var result = {
-        value = "",
-        had_part = false
-    }
-    strings |> iter::for_each(|s| {
-        case result.had_part
-            -> result.value = result.value |> concat(separator)
-        result.value = result.value |> concat(s)
-        result.had_part = true
+/// Joins the strings provided by the iterator `strings` into a single string,
+/// inserting `sep` inbetween joined strings.
+pub proc join(strings, sep) {
+    mut value = ""
+    mut had_part = false
+    strings |> for_each(|s| {
+        case had_part
+            -> value = value |> concat(sep)
+        value = value |> concat(s)
+        had_part = true
     })
-    return result.value
+    return value
 }
 
-pub proc iter(s) {
-    return 0..length(s)
-        |> iter::map(|i| s |> at(i))
-}
+/// Returns an iterator over all code points in `s`.
+pub proc iter(s) = 0..length(s)
+    |> map(|i| s |> at(i))
 
 proc parse_digit(c) {
-    var d
+    val d
     case c {
         "0" -> d = 0  "1" -> d = 1  "2" -> d = 2
         "3" -> d = 3  "4" -> d = 4  "5" -> d = 5
@@ -165,18 +185,18 @@ proc parse_digit(c) {
 proc parse_digits(s) {
     return s
         |> iter()
-        |> iter::reduce(|r, c| r |> res::and_then(|v|
-            parse_digit(c)
-                |> res::map(|d| v * 10 + d)
+        |> reduce(|r, c| r |> and_then(|v|
+            parse_digit(c) |> map(|d| v * 10 + d)
         ), #ok 0)
-        |> res::map(|r| #some r)
-        |> res::unwrap_or(#none unit)
+        |> std::res::map(|r| #some r)
+        |> unwrap_or(#none unit)
 }
 
+/// Attempts to parse `source` as an integer.
 pub proc parse_int(source) {
     case length(source) == 0 -> return #none unit
-    mut var start = 0
-    mut var sign = 1
+    mut start = 0
+    mut sign = 1
     case source |> at(0) {
         "+" -> {
             case length(source) == 1 -> return #none unit
@@ -191,57 +211,56 @@ pub proc parse_int(source) {
     return source
         |> substring_after(start)
         |> parse_digits()
-        |> opt::map(|r| r * sign)
+        |> map(|r| r * sign)
 }
 
 proc char_to_ascii_lowercase(c) {
-    var uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    var lowercase = "abcdefghijklmnopqrstuvwxyz"
+    val uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    val lowercase = "abcdefghijklmnopqrstuvwxyz"
     return uppercase
         |> find(c)
-        |> iter::next()
-        |> opt::map(|i| lowercase |> at(i))
-        |> opt::unwrap_or(c)
+        |> next()
+        |> map(|i| lowercase |> at(i))
+        |> unwrap_or(c)
 }
 
 proc to_ascii_lowercase(s) {
     return s
         |> iter()
-        |> iter::map(char_to_ascii_lowercase)
+        |> map(char_to_ascii_lowercase)
         |> join("")
 }
 
 proc parse_fractional(source) {
     // parses '<int>(.<int>)' (parens = optional)
     case length(source) == 0 -> return #none unit
-    var dot = source
+    val dot = source
         |> find(".")
-        |> iter::next()
-        |> opt::unwrap_or(source |> length())
-    var whole
-    case source
-        |> substring_until(dot)
-        |> parse_int() {
+        |> next()
+        |> unwrap_or(source |> length())
+    val whole
+    case source |> substring_until(dot) |> parse_int() {
         #some r -> whole = r |> as_flt()
         #none -> case dot == 0 -> whole = 0.0
             else return #none unit
     }
     case dot >= length(source) -> return #some whole
     return 1..(length(source) - dot)
-        |> iter::reduce(|r, i| r |> res::and_then(|v| source
+        |> reduce(|r, i| r |> and_then(|v| source
             |> at(dot + i)
             |> parse_digit()
-            |> res::map(|d| v + as_flt(d) * math::pow(10.0, -as_flt(i)))
+            |> map(|d| v + as_flt(d) * pow(10.0, -as_flt(i)))
         ), #ok 0.0)
-        |> res::map(|fraction| #some whole + fraction)
-        |> res::unwrap_or(#none unit)
+        |> map(|fraction| #some whole + fraction)
+        |> unwrap_or(#none unit)
 }
 
+/// Attempts to parse `source` as a float.
 pub proc parse_flt(source) {
     case length(source) == 0 -> return #none unit
     // (optional) '+' or '-'
-    mut var start = 0
-    mut var sign = 1.0
+    mut start = 0
+    mut sign = 1.0
     case source |> at(0) {
         "+" -> {
             case length(source) == 1 -> return #none unit
@@ -253,30 +272,27 @@ pub proc parse_flt(source) {
             sign = -1.0
         }
     }
-    var after_sign = source
-        |> substring_after(start)
+    val after_sign = source |> substring_after(start)
     // rest of input may be 'nan', 'inf' or 'infinity' here (case-insensitive)
     case after_sign |> to_ascii_lowercase() {
-        "nan" -> return #some math::NAN * sign
-        "inf" -> return #some math::INF * sign
-        "infinity" -> return #some math::INF * sign
+        "nan" -> return #some NAN * sign
+        "inf" -> return #some INF * sign
+        "infinity" -> return #some INF * sign
     }
     // parse everything up to the next 'e' or 'E' as a fractional
-    var exponent = 0..length(after_sign)
-        |> iter::find(|i| at(after_sign, i) == "e" || at(after_sign, i) == "E")
-        |> opt::unwrap_or(after_sign |> length())
-    var fractional
-    case after_sign
-        |> substring_until(exponent)
-        |> parse_fractional() {
-        #none -> return #none unit
+    val exponent = 0..length(after_sign)
+        |> find(|i| at(after_sign, i) == "e" || at(after_sign, i) == "E")
+        |> unwrap_or(after_sign |> length())
+    val fractional
+    case after_sign |> substring_until(exponent) |> parse_fractional() {
         #some f -> fractional = f
+        #none -> return #none unit
     }
     // exponent is optional
     case exponent >= length(after_sign) -> return #some sign * fractional
     // sign of exponent after 'e' or 'E' (optional) '+' or '-'
-    mut var exponent_sign = 1.0
-    mut var exponent_start = exponent + 1
+    mut exponent_sign = 1.0
+    mut exponent_start = exponent + 1
     case exponent_start >= length(after_sign) -> return #some sign * fractional
     case after_sign |> at(exponent_start) {
         "+" -> exponent_start = exponent + 2
@@ -286,19 +302,19 @@ pub proc parse_flt(source) {
         }
     }
     // exponent value
-    var exponent_val
-    case after_sign
-        |> substring_after(exponent_start)
-        |> parse_int() {
-        #some e -> exponent_val = math::pow(10.0, as_flt(e) * exponent_sign)
+    val exponent_val
+    case after_sign |> substring_after(exponent_start) |> parse_int() {
+        #some e -> exponent_val = pow(10.0, as_flt(e) * exponent_sign)
         #none -> case exponent_start == length(after_sign) -> exponent_val = 1.0
             else return #none unit
     }
     return #some sign * fractional * exponent_val
 } 
 
-pub proc repeat(repeated, times) {
-    return iter::repeat_over(|| repeated)
-        |> iter::take(times)
-        |> join("")
-}
+pub proc repeat(repeated, times) = repeat_over(|| repeated)
+    |> take(times)
+    |> join("")
+
+pub proc replace(src, replaced, replacement) = src
+    |> split(replaced)
+    |> join(replacement)

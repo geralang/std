@@ -1,2 +1,2 @@
-
+/// Provides implementations of various types of collections.
 mod std::coll

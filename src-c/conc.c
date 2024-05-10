@@ -180,15 +180,13 @@
 static gbool HAS_THREAD_STORAGE = 0;
 static Storage THREAD_STORAGE;
 
-THREAD_RET_T thread_start(ThreadTask* htask) {
-    ThreadTask task = *htask;
+THREAD_RET_T thread_start(GeraClosure* htask) {
+    GeraClosure task = *htask;
     free(htask);
-    task.call(task.captures);
-    gera___rc_decr(task.captures);
+    GERA_CLOSURE_CALL_NOARGS(task, GERA_CLOSURE_FPTR_NOARGS(task, void));
+    gera___ref_deleted(task.allocation);
     return THREAD_RET_V;
 }
-
-typedef GERA_CLOSURE_NOARGS(gint) ThreadHandle;
 
 typedef struct ThreadEntry {
     THREAD thread;
@@ -197,8 +195,8 @@ typedef struct ThreadEntry {
     GeraAllocation* handle_allocation;
 } ThreadEntry;
 
-void free_thread_handle(char* data, size_t size) {
-    size_t id = *((size_t*) data);
+void free_thread_handle(GeraAllocation* allocation) {
+    size_t id = *((size_t*) allocation->data);
     ThreadEntry* thread_entry = storage_get(&THREAD_STORAGE, id);
     mutex_free(&thread_entry->mutex);
     cond_var_free(&thread_entry->cond_var);
@@ -221,28 +219,32 @@ static inline void init_thread_storage() {
     init_process_storage();
 }
 
-ThreadHandle gera_std_conc_spawn(ThreadTask task) {
-    gera___rc_incr(task.captures);
+#define GET_HANDLE_ID(closure) \
+    GERA_CLOSURE_CALL_NOARGS(closure, GERA_CLOSURE_FPTR_NOARGS(closure, gint))
+
+GeraClosure gera_std_conc_spawn(GeraClosure task) {
+    gera___ref_copied(task.allocation); // note the copy made for the new thread
     init_thread_storage();
     ThreadEntry temp_thread_entry = (ThreadEntry) {
         .mutex = mutex_create(),
         .cond_var = cond_var_create()
     };
     size_t id = storage_insert(&THREAD_STORAGE, &temp_thread_entry);
-    ThreadTask* htask = (ThreadTask*) malloc(sizeof(ThreadTask));
+    GeraClosure* htask = malloc(sizeof(GeraClosure));
     *htask = task;
     ThreadEntry* thread_entry = storage_get(&THREAD_STORAGE, id);
     mutex_lock(&thread_entry->mutex); // prevent joining until fully initialized
     thread_entry->thread = thread_create((void*)(&thread_start), htask);
-    GeraAllocation* allocation = gera___rc_alloc(
+    GeraAllocation* allocation = gera___alloc(
         sizeof(gint), &free_thread_handle
     );
     *((size_t*) allocation->data) = id;
     thread_entry->handle_allocation = allocation;
     mutex_unlock(&thread_entry->mutex);
-    return (ThreadHandle) {
-        .captures = allocation,
-        .call = &get_thread_handle
+    gera___ref_deleted(task.allocation);
+    return (GeraClosure) {
+        .allocation = allocation,
+        .body = &get_thread_handle
     };
 }
 
@@ -263,40 +265,47 @@ void gera_std_conc_wait() {
         found_entry = 1;
         break;
     }
-    gera___rc_incr(this_thread_entry->handle_allocation);
+    if(!found_entry) {
+        gera___panic(
+            "Attempted to lock a thread not managed by the standard library!"
+        );
+    }
+    gera___ref_copied(this_thread_entry->handle_allocation);
     storage_unlock(&THREAD_STORAGE);
     cond_var_wait(&this_thread_entry->cond_var);
-    gera___rc_decr(this_thread_entry->handle_allocation);
+    gera___ref_deleted(this_thread_entry->handle_allocation);
 }
 
-void gera_std_conc_notify(ThreadHandle other) {
+void gera_std_conc_notify(GeraClosure other) {
     init_thread_storage();
-    gint sid = other.call(other.captures);
+    gint sid = GET_HANDLE_ID(other);
     size_t id = *((size_t*) &sid);
     if(id >= THREAD_STORAGE.data_length) {
         gera___panic("The provided thread handle is invalid!");
     }
     ThreadEntry* other_thread = storage_get(&THREAD_STORAGE, id);
-    if(other_thread->handle_allocation != other.captures) {
+    if(other_thread->handle_allocation != other.allocation) {
         gera___panic("The provided thread handle is invalid!");
     }
     cond_var_notify(&other_thread->cond_var);
+    gera___ref_deleted(other.allocation);
 }
 
-void gera_std_conc_join(ThreadHandle other) {
+void gera_std_conc_join(GeraClosure other) {
     init_thread_storage();
-    gint sid = other.call(other.captures);
+    gint sid = GET_HANDLE_ID(other);
     size_t id = *((size_t*) &sid);
     if(id >= THREAD_STORAGE.data_length) {
         gera___panic("The provided thread handle is invalid!");
     }
     ThreadEntry* other_thread = storage_get(&THREAD_STORAGE, id);
-    if(other_thread->handle_allocation != other.captures) {
+    if(other_thread->handle_allocation != other.allocation) {
         gera___panic("The provided thread handle is invalid!");
     }
     mutex_lock(&other_thread->mutex);
     thread_join(&other_thread->thread);
     mutex_unlock(&other_thread->mutex);
+    gera___ref_deleted(other.allocation);
 }
 
 #ifdef _WIN32
@@ -321,8 +330,6 @@ void gera_std_conc_join(ThreadHandle other) {
 static gbool HAS_MUTEX_STORAGE = 0;
 static Storage MUTEX_STORAGE;
 
-typedef GERA_CLOSURE_NOARGS(gint) MutexHandle;
-
 typedef struct MutexEntry {
     MUTEX mutex;
     MUTEX data_mutex;
@@ -331,8 +338,8 @@ typedef struct MutexEntry {
     GeraAllocation* handle_allocation;
 } MutexEntry;
 
-void free_mutex_handle(char* data, size_t size) {
-    size_t id = *((size_t*) data);
+void free_mutex_handle(GeraAllocation* allocation) {
+    size_t id = *((size_t*) allocation->data);
     MutexEntry* mutex_entry = storage_get(&MUTEX_STORAGE, id);
     mutex_free(&mutex_entry->data_mutex);
     mutex_free(&mutex_entry->mutex);
@@ -350,9 +357,9 @@ static inline void init_mutex_storage() {
     }
 }
 
-MutexHandle gera_std_conc_mutex() {
+GeraClosure gera_std_conc_mutex() {
     init_mutex_storage();
-    GeraAllocation* allocation = gera___rc_alloc(
+    GeraAllocation* allocation = gera___alloc(
         sizeof(gint), &free_mutex_handle
     );
     MutexEntry mutex_entry = (MutexEntry) {
@@ -363,21 +370,21 @@ MutexHandle gera_std_conc_mutex() {
     };
     size_t id = storage_insert(&MUTEX_STORAGE, &mutex_entry);
     *((size_t*) allocation->data) = id;
-    return (MutexHandle) {
-        .captures = allocation,
-        .call = &get_mutex_handle
+    return (GeraClosure) {
+        .allocation = allocation,
+        .body = &get_mutex_handle
     };
 }
 
-gbool gera_std_conc_try_lock(MutexHandle mutex_handle) {
+gbool gera_std_conc_try_lock(GeraClosure mutex_handle) {
     init_mutex_storage();
-    gint sid = mutex_handle.call(mutex_handle.captures);
+    gint sid = GET_HANDLE_ID(mutex_handle);
     size_t id = *((size_t*) &sid);
     if(id >= MUTEX_STORAGE.data_length) {
         gera___panic("The provided mutex handle is invalid!");
     }
     MutexEntry* mutex_entry = storage_get(&MUTEX_STORAGE, id);
-    if(mutex_entry->handle_allocation != mutex_handle.captures) {
+    if(mutex_entry->handle_allocation != mutex_handle.allocation) {
         gera___panic("The provided mutex handle is invalid!");
     }
     mutex_lock(&mutex_entry->data_mutex);
@@ -396,18 +403,19 @@ gbool gera_std_conc_try_lock(MutexHandle mutex_handle) {
         mutex_entry->owner = thread_current_identifier();
         mutex_unlock(&mutex_entry->data_mutex);
     }
+    gera___ref_deleted(mutex_handle.allocation);
     return entered;
 }
 
-void gera_std_conc_lock(MutexHandle mutex_handle) {
+void gera_std_conc_lock(GeraClosure mutex_handle) {
     init_mutex_storage();
-    gint sid = mutex_handle.call(mutex_handle.captures);
+    gint sid = GET_HANDLE_ID(mutex_handle);
     size_t id = *((size_t*) &sid);
     if(id >= MUTEX_STORAGE.data_length) {
         gera___panic("The provided mutex handle is invalid!");
     }
     MutexEntry* mutex_entry = storage_get(&MUTEX_STORAGE, id);
-    if(mutex_entry->handle_allocation != mutex_handle.captures) {
+    if(mutex_entry->handle_allocation != mutex_handle.allocation) {
         gera___panic("The provided mutex handle is invalid!");
     }
     mutex_lock(&mutex_entry->data_mutex);
@@ -424,34 +432,36 @@ void gera_std_conc_lock(MutexHandle mutex_handle) {
     mutex_entry->has_owner = 1;
     mutex_entry->owner = thread_current_identifier();
     mutex_unlock(&mutex_entry->data_mutex);
+    gera___ref_deleted(mutex_handle.allocation);
 }
 
-gbool gera_std_conc_is_locked(MutexHandle mutex_handle) {
+gbool gera_std_conc_is_locked(GeraClosure mutex_handle) {
     init_mutex_storage();
-    gint sid = mutex_handle.call(mutex_handle.captures);
+    gint sid = GET_HANDLE_ID(mutex_handle);
     size_t id = *((size_t*) &sid);
     if(id >= MUTEX_STORAGE.data_length) {
         gera___panic("The provided mutex handle is invalid!");
     }
     MutexEntry* mutex_entry = storage_get(&MUTEX_STORAGE, id);
-    if(mutex_entry->handle_allocation != mutex_handle.captures) {
+    if(mutex_entry->handle_allocation != mutex_handle.allocation) {
         gera___panic("The provided mutex handle is invalid!");
     }
     mutex_lock(&mutex_entry->data_mutex);
     gbool is_locked = mutex_entry->has_owner;
     mutex_unlock(&mutex_entry->data_mutex);
+    gera___ref_deleted(mutex_handle.allocation);
     return is_locked;
 }
 
-void gera_std_conc_unlock(MutexHandle mutex_handle) {
+void gera_std_conc_unlock(GeraClosure mutex_handle) {
     init_mutex_storage();
-    gint sid = mutex_handle.call(mutex_handle.captures);
+    gint sid = GET_HANDLE_ID(mutex_handle);
     size_t id = *((size_t*) &sid);
     if(id >= MUTEX_STORAGE.data_length) {
         gera___panic("The provided mutex handle is invalid!");
     }
     MutexEntry* mutex_entry = storage_get(&MUTEX_STORAGE, id);
-    if(mutex_entry->handle_allocation != mutex_handle.captures) {
+    if(mutex_entry->handle_allocation != mutex_handle.allocation) {
         gera___panic("The provided mutex handle is invalid!");
     }
     mutex_lock(&mutex_entry->data_mutex);
@@ -465,4 +475,5 @@ void gera_std_conc_unlock(MutexHandle mutex_handle) {
     mutex_unlock(&mutex_entry->mutex);
     mutex_entry->has_owner = 0;
     mutex_unlock(&mutex_entry->data_mutex);
+    gera___ref_deleted(mutex_handle.allocation);
 }
