@@ -1,4 +1,4 @@
-
+/// Provides a simple vector implementation.
 mod std::coll::Vector
 
 use std::str::fmt
@@ -6,6 +6,7 @@ use std::arr::subarray_until
 use std::sort::quicksort
 use std::iter::*
 
+/// Creates and returns a new vector.
 pub proc new() { return {
     content = [],
     size = 0,
@@ -145,6 +146,8 @@ pub proc new() { return {
     }
 } }
 
+/// Creates and returns a new vector and collects all items
+/// from the given iterator `from_iter` into it.
 pub proc collect(from_iter) {
     val dest = new()
     from_iter |> for_each(|item| dest .> push(item))

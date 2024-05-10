@@ -1,9 +1,11 @@
-
+/// Provides a way to create and manage child processes.
 mod std::prc::Process
 
 use std::internal::prc::Process::*
 
 target c {
+    /// Creates a new process running the program `program` with the arguments
+    /// `arguments`.
     pub proc new(program, arguments) = {
         handle = internal_run(program, arguments),
 
@@ -57,6 +59,7 @@ target c {
         }
     }
 
+    /// Makes the program exit with status code `code`.
     pub proc exit(code) {
         internal_exit(code)
         return panic("called 'std::prc::Process::exit'")

@@ -1,9 +1,11 @@
-
+/// Provides thread-related functionality.
 mod std::conc::Thread
 
 use std::internal::conc::Thread::*
 
 target c {
+    /// Creates a new thread that is tasked with calling the given closure
+    /// `task`. The thread finishes when the closure returns.
     pub proc new(task) = {
         handle = internal_spawn(task),
 
@@ -18,7 +20,13 @@ target c {
         }
     }
 
+    /// Makes the calling thread wait until another thread calls 
+    /// the `nofify`-method on the thread object returned by `new`
+    /// that represents the calling thread.
+    /// Note calling `wait` from the main thread causes a panic, since
+    /// there is no object to call `nofify` on.
     pub proc wait() = internal_wait()
 
+    /// Makes the calling thead wait for `time` milliseconds.
     pub proc sleep(time) = internal_sleep(time)
 }

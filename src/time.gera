@@ -1,4 +1,4 @@
-
+/// This module contains procedures and constants for working with time. 
 mod std::time
 
 use std::opt::expect
@@ -9,34 +9,57 @@ use std::internal::time::*
 use std::iter::*
 use std::str::*
 
+/// Represents the month of January as an index (1-indexed), this being `1`.
 pub val JANUARY = 1
+/// Represents the month of February as an index (1-indexed), this being `2`.
 pub val FEBRUARY = 2
+/// Represents the month of March as an index (1-indexed), this being `3`.
 pub val MARCH = 3
+/// Represents the month of April as an index (1-indexed), this being `4`.
 pub val APRIL = 4
+/// Represents the month of May as an index (1-indexed), this being `5`.
 pub val MAY = 5
+/// Represents the month of June as an index (1-indexed), this being `6`.
 pub val JUNE = 6
+/// Represents the month of July as an index (1-indexed), this being `7`.
 pub val JULY = 7
+/// Represents the month of August as an index (1-indexed), this being `8`.
 pub val AUGUST = 8
+/// Represents the month of September as an index (1-indexed), this being `9`.
 pub val SEPTEMBER = 9
+/// Represents the month of October as an index (1-indexed), this being `10`.
 pub val OCTOBER = 10
+/// Represents the month of November as an index (1-indexed), this being `11`.
 pub val NOVEMBER = 11
+/// Represents the month of December as an index (1-indexed), this being `12`.
 pub val DECEMBER = 12
 
+/// Returns the number of millseconds
+/// since the 1st of January, 1 AD at 00:00 in UTC.
 pub proc now_utc() = internal_utc_unix_millis() + unix_epoch()
 
+/// Returns the number of millseconds
+/// since the 1st of January, 1 AD at 00:00 in local time.
 pub proc now_local() = internal_local_unix_millis() + unix_epoch()
 
+/// Computes the time passed since the 1st of January, 1 AD at 00:00
+/// after `day` days, `month` months and `year` years in milliseconds.
 pub proc date(day, month, year) = 0
     |> add_years(year - 1)
     |> add_months(month - 1)
     |> add_days(day - 1)
 
+/// Computes the time passed since the 1st of January, 1 AD at 00:00
+/// after `day` days, `month` months, `year` years,
+/// `hour` hours, `minute` minutes and `second` seconds in milliseconds.
 pub proc date_time(day, month, year, hour, minute, second)
     = date(day, month, year)
         |> add_seconds(second)
         |> add_minutes(minute)
         |> add_hours(hour)
 
+/// Returns the number of milliseconds passed since
+/// the 1st of January, 1 AD at 00:00 on the 1st of January, 1970 at 00:00.
 pub proc unix_epoch() = 0 |> add_years(1969)
 
 pub proc as_utc(local_tz_timestamp) = local_tz_timestamp
@@ -46,54 +69,81 @@ pub proc as_local(utc_tz_timestamp) = utc_tz_timestamp
     + (internal_local_unix_millis() - internal_utc_unix_millis())
 
 
+/// The number of milliseconds in a week.
 val WEEK_IN_MILLIS = 1000 * 60 * 60 * 24 * 7
+/// The number of milliseconds in a day.
 val DAY_IN_MILLIS = 1000 * 60 * 60 * 24
+/// The number of milliseconds in an hour.
 val HOUR_IN_MILLIS = 1000 * 60 * 60
+/// The number of milliseconds in a minute.
 val MINUTE_IN_MILLIS = 1000 * 60
+/// The number of milliseconds in a second.
 val SECOND_IN_MILLIS = 1000
 
 
-pub proc as_weeks(timestamp) = timestamp / WEEK_IN_MILLIS 
+/// Returns the number of full weeks that pass in `millis` milliseconds.
+pub proc as_weeks(millis) = millis / WEEK_IN_MILLIS 
 
-pub proc as_days(timestamp) = timestamp / DAY_IN_MILLIS 
+/// Returns the number of full days that pass in `millis` milliseconds.
+pub proc as_days(millis) = millis / DAY_IN_MILLIS 
 
-pub proc as_hours(timestamp) = timestamp / HOUR_IN_MILLIS 
+/// Returns the number of full hours that pass in `millis` milliseconds.
+pub proc as_hours(millis) = millis / HOUR_IN_MILLIS 
 
-pub proc as_minutes(timestamp) = timestamp / MINUTE_IN_MILLIS 
+/// Returns the number of full minutes that pass in `millis` milliseconds.
+pub proc as_minutes(millis) = millis / MINUTE_IN_MILLIS 
 
-pub proc as_seconds(timestamp) = timestamp / SECOND_IN_MILLIS
+/// Returns the number of full seconds that pass in `millis` milliseconds.
+pub proc as_seconds(millis) = millis / SECOND_IN_MILLIS
 
 
-pub proc as_days_flt(timestamp) = as_flt(timestamp)
+/// Returns the number of weeks that pass in `millis` milliseconds.
+pub proc as_days_flt(millis) = as_flt(millis)
     / as_flt(WEEK_IN_MILLIS)
 
-pub proc as_hours_flt(timestamp) = as_flt(timestamp)
+/// Returns the number of hours that pass in `millis` milliseconds.
+pub proc as_hours_flt(millis) = as_flt(millis)
     / as_flt(DAY_IN_MILLIS)
 
-pub proc as_minutes_flt(timestamp) = as_flt(timestamp)
+/// Returns the number of minutes that pass in `millis` milliseconds.
+pub proc as_minutes_flt(millis) = as_flt(millis)
     / as_flt(MINUTE_IN_MILLIS)
 
-pub proc as_seconds_flt(timestamp) = as_flt(timestamp)
+/// Returns the number of seconds that pass in `millis` milliseconds.
+pub proc as_seconds_flt(millis) = as_flt(millis)
     / as_flt(SECOND_IN_MILLIS)
 
 
+/// Returns the number of milliseconds that pass in `w` weeks.
 pub proc weeks(w) = w * WEEK_IN_MILLIS
 
+/// Returns the number of milliseconds that pass in `d` days.
 pub proc days(d) = d * DAY_IN_MILLIS
 
+/// Returns the number of milliseconds that pass in `h` hours.
 pub proc hours(h) = h * HOUR_IN_MILLIS
 
+/// Returns the number of milliseconds that pass in `m` minutes.
 pub proc minutes(m) = m * MINUTE_IN_MILLIS
 
+/// Returns the number of milliseconds that pass in `s` seconds.
 pub proc seconds(s) = s * SECOND_IN_MILLIS
 
 
+/// Returns the number of milliseconds that will have passed `y` years
+/// after the moment in time that is `timestamp` milliseconds after
+/// the 1st of January 1 AD at 00:00, accounting for leap years.
 pub proc add_years(timestamp, y) {
     val sy = timestamp |> as_year_ad()
     return 0..y
         |> map(|y| sy + y |> is_leap_year() |> if_else(366, 365))
         |> reduce(|t, d| t + days(d), timestamp)
 }
+
+/// Returns the number of milliseconds that will have passed `m` months
+/// after the moment in time that is `timestamp` milliseconds after
+/// the 1st of January 1 AD at 00:00,
+/// accounting for leap years and the different lenghts of months.
 pub proc add_months(timestamp, m) {
     val month_days = [31, 0000, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     return 0..m
@@ -104,27 +154,61 @@ pub proc add_months(timestamp, m) {
             return r + days(month_days[m])
         }, timestamp)
 }
+
+/// Returns the number of milliseconds that will have passed `w` weeks
+/// after the moment in time that is `timestamp` milliseconds after
+/// the 1st of January 1 AD at 00:00,
+/// **not accounting for leap years or the different lenghts of months**.
 pub proc add_weeks(timestamp, w) {
     return timestamp + weeks(w)
 }
+
+/// Returns the number of milliseconds that will have passed `d` days
+/// after the moment in time that is `timestamp` milliseconds after
+/// the 1st of January 1 AD at 00:00,
+/// **not accounting for leap years or the different lenghts of months**.
 pub proc add_days(timestamp, d) {
     return timestamp + days(d)
 }
+
+/// Returns the number of milliseconds that will have passed `h` hours
+/// after the moment in time that is `timestamp` milliseconds after
+/// the 1st of January 1 AD at 00:00,
+/// **not accounting for leap years or the different lenghts of months**.
 pub proc add_hours(timestamp, h) {
     return timestamp + hours(h)
 }
+
+/// Returns the number of milliseconds that will have passed `m` minutes
+/// after the moment in time that is `timestamp` milliseconds after
+/// the 1st of January 1 AD at 00:00,
+/// **not accounting for leap years or the different lenghts of months**.
 pub proc add_minutes(timestamp, m) {
     return timestamp + minutes(m)
 }
+
+/// Returns the number of milliseconds that will have passed `s` seconds
+/// after the moment in time that is `timestamp` milliseconds after
+/// the 1st of January 1 AD at 00:00,
+/// **not accounting for leap years or the different lenghts of months**.
 pub proc add_seconds(timestamp, s) {
     return timestamp + seconds(s)
 }
 
+/// Returns `true` if the year that is `no_of_years_passed_ad` years after
+/// the year 1 AD is a leap year.
+/// If `no_of_years_passed_ad` is `2019`, that would correspond to
+/// the year 2020 AD, which was a leap year, resulting in `true` being returned.
 pub proc is_leap_year(no_of_years_passed_ad) {
     val dyear = no_of_years_passed_ad + 1
     return dyear % 400 == 0 || (dyear % 100 != 0 && dyear % 4 == 0)
 }
 
+/// Returns the number of full years that have passed `timestamp` milliseconds
+/// after the 1st of January, 1 AD at 00:00.
+/// If `timestamp` was the number of milliseconds that passed
+/// since the 1st of January, 1 AD at 00:00 on the 3rd of February, 1973
+/// at 23:05:13, that would result in `1972` being returned.
 pub proc as_year_ad(timestamp) {
     val state = {
         days = timestamp |> as_days(),
@@ -141,6 +225,13 @@ pub proc as_year_ad(timestamp) {
         })
     return state.year
 }
+
+/// Returns the number of full months passed since the start of the current
+/// year at the moment that is `timestamp` milliseconds after the
+/// 1st of January, 1 AD at 00:00.
+/// If `timestamp` was the number of milliseconds that passed
+/// since the 1st of January, 1 AD at 00:00 on the 3rd of February, 1973
+/// at 23:05:13, that would result in `1` being returned.
 pub proc as_month_of_year(timestamp) {
     val month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     case timestamp |> as_year_ad() |> is_leap_year() -> month_days[1] = 29
@@ -149,9 +240,23 @@ pub proc as_month_of_year(timestamp) {
         |> find(|m| days < reduce(0..=m, |d, i| d + month_days[i], 0))
         |> expect("'as_day_of_year' can't return a day that's larger")
 }
+
+/// Returns the number of full days passed since the start of the current
+/// year at the moment that is `timestamp` milliseconds after the
+/// 1st of January, 1 AD at 00:00.
+/// If `timestamp` was the number of milliseconds that passed
+/// since the 1st of January, 1 AD at 00:00 on the 3rd of February, 1973
+/// at 23:05:13, that would result in `33` being returned.
 pub proc as_day_of_year(timestamp) {
     return timestamp - add_years(0, timestamp |> as_year_ad()) |> as_days()
 }
+
+/// Returns the number of full days passed since the start of the current
+/// month at the moment that is `timestamp` milliseconds after the
+/// 1st of January, 1 AD at 00:00.
+/// If `timestamp` was the number of milliseconds that passed
+/// since the 1st of January, 1 AD at 00:00 on the 3rd of February, 1973
+/// at 23:05:13, that would result in `2` being returned.
 pub proc as_day_of_month(timestamp) {
     val month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     case timestamp |> as_year_ad() |> is_leap_year() -> month_days[1] = 29
@@ -163,23 +268,48 @@ pub proc as_day_of_month(timestamp) {
         })
     return state.days
 }
+
+/// Returns the number of full days passed since the start of the current
+/// week at the moment that is `timestamp` milliseconds after the
+/// 1st of January, 1 AD at 00:00.
+/// If `timestamp` was the number of milliseconds that passed
+/// since the 1st of January, 1 AD at 00:00 on the 3rd of February, 1973
+/// at 23:05:13, that would result in `5` being returned.
 pub proc as_day_of_week(timestamp) {
     // January 1st, 1 AD was a Monday :)
     return as_days(timestamp) % 7
 }
+
+/// Returns the number of full hours passed since the start of the current
+/// day at the moment that is `timestamp` milliseconds after the
+/// 1st of January, 1 AD at 00:00.
 pub proc as_hour_of_day(timestamp) {
     return as_hours(timestamp) % 24
 }
+
+/// Returns the number of full minutes passed since the start of the current
+/// hour at the moment that is `timestamp` milliseconds after the
+/// 1st of January, 1 AD at 00:00.
 pub proc as_minute_of_hour(timestamp) {
     return as_minutes(timestamp) % 60
 }
+
+/// Returns the number of full seconds passed since the start of the current
+/// minute at the moment that is `timestamp` milliseconds after the
+/// 1st of January, 1 AD at 00:00.
 pub proc as_second_of_minute(timestamp) {
     return as_seconds(timestamp) % 60
 }
+
+/// Returns the number of full milliseconds passed since the start of the
+/// current second at the moment that is `timestamp` milliseconds after the
+/// 1st of January, 1 AD at 00:00.
 pub proc as_milli_of_second(timestamp) {
     return timestamp % 1000
 }
 
+/// Returns the full English name of the month that is `month` months after
+/// the start of the year (0-indexed).
 pub proc display_month(month) {
     val m
     case month < 0 -> m = month + (abs(month) / 12 + 1) * 12
@@ -201,6 +331,8 @@ pub proc display_month(month) {
     return panic("all cases handled above")
 }
 
+/// Returns the full English name of the weekday that is `day` days after
+/// the start of the week (0-indexed).
 pub proc display_weekday(day) {
     val d
     case day < 0 -> d = day + (abs(day) / 7 + 1) * 7
@@ -217,6 +349,9 @@ pub proc display_weekday(day) {
     return panic("all cases handled above")
 }
 
+/// Displays the English ordinal 1-indexed number
+/// of the given 0-indexed day `day`.
+/// If `day` was `5`, that would result in `"6th"` being returned.
 pub proc display_day(day) {
     val last_digit = (day + 1) % 10
     val ending
@@ -228,6 +363,19 @@ pub proc display_day(day) {
     return (day + 1) |> as_str() |> concat(ending)
 }
 
+/// In the context of the moment that is `timestamp` milliseconds after the
+/// 1st of January, 1 AD at 00:00, returns `pattern`, replacing
+/// `{day}` with the named current day of the month,
+/// `{weekday}` with the named current day of the week,
+/// `{month}` with the named current month of the year,
+/// `[second]` with the current second of the minute,
+/// `[minute]` with the current minute of the hour,
+/// `[hour]` with the current hour of the day,
+/// `[day]` with the current day of the month,
+/// `[month]` with the current month of the year and
+/// `[year]` with the current year.
+/// A traditional US-style `pattern` would look like
+/// `"[month]/[day]/[year] [hour]:[minute]:[second]"`.
 pub proc format_date(timestamp, pattern) {
     return pattern
         |> split("{day}") |> join(

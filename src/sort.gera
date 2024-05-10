@@ -1,18 +1,33 @@
-
+/// This module contains a simple quicksort implementation
+/// and procedures for clearly defining the sorting order. 
 mod std::sort
 
 use std::iter::*
 use std::opt::*
 use std::rng::Random
 
+/// Returns a comparison function that makes it so values for which `f`
+/// returns a lower number will be placed at an index lower than that of
+/// a value for which `f` returns a higher number (ascending order).
 pub proc ascending(f) {
     return |a, b| f(a) - f(b)
 }
 
+/// Returns a comparison function that makes it so values for which `f`
+/// returns a lower number will be placed at an index higher than that of
+/// a value for which `f` returns a higher number (descending order).
 pub proc descending(f) {
     return |a, b| f(b) - f(a)
 }  
 
+/// Sorts the part of the array `src` starting at the index `start`
+/// up to (not including) the index `end` in place, modifying `src`.
+/// Items will be sorted according to the comparison function `comp`
+/// (see `std::sort::ascending` and `std::sort::descending`).
+/// `comp` must be a function that takes two array elements `a` and `b`
+/// to compare, returning eiter a
+/// number that is less than zero (placing `a` at an index lower than `b`) or a
+/// number that is greater than zero (placing `a` at an index higher than `b`).
 pub proc quicksort(src, start, end, comp) {
     case end - start <= 1 -> return unit
     val some_comp_val = comp(src[start], src[end - 1])

@@ -1,4 +1,5 @@
-
+/// This module contains procedures for working with strings.
+/// Just like `core::substring`, all indices are in unicode code points.
 mod std::str
 
 use std::iter::*
@@ -6,15 +7,24 @@ use std::opt::*
 use std::math::*
 use std::res::*
 
+/// Returns the part of the string `s` starting at the index 0
+/// up to (not including) the index `end_index`.
+/// If `end_index` is negative, the length of `s` is added to it.
 pub proc substring_until(s, end_index) = s
     |> substring(0, end_index)
 
+/// Returns the part of the string `s` starting at the index `start_index`
+/// up to the end of the string.
+/// If `start_index` is negative, the length of `s` is added to it.
 pub proc substring_after(s, start_index) = s
     |> substring(start_index, s |> length())
 
+/// Returns a new string, only containing the code point at the index `index`
+/// in the string `s`. If `index` is negative, the length of `s` is added to it.
 pub proc at(s, index) = s
     |> substring(index, index + 1)
 
+/// Returns `true` if the beginning of `s` fully matches `prefix`.
 pub proc starts_with(s, prefix) {
     case length(prefix) > length(s) -> return false
     val compared_prefix = s
@@ -22,6 +32,7 @@ pub proc starts_with(s, prefix) {
     return compared_prefix == prefix
 }
 
+/// Returns `true` if the end of `s` fully matches `prefix`.
 pub proc ends_with(s, suffix) {
     case length(suffix) > length(s) -> return false
     val compared_suffix = s
@@ -29,6 +40,8 @@ pub proc ends_with(s, suffix) {
     return compared_suffix == suffix
 }
 
+/// Finds all occurances of `sub` in `s`, returning an iterator over the
+/// indices of the first code points of the occurances of `sub`.
 pub proc find(s, sub) {
     mut i = 0
     return || {
@@ -48,6 +61,11 @@ pub proc find(s, sub) {
     }
 }
 
+/// Returns a new string with a minimum length of `target_length`, padded
+/// by repeating `padding` as many times as needed and appending it to the end
+/// of `s`.
+/// This means that if `padding` is more than one code point long, the returned
+/// string may be longer than `target_length`.
 pub proc pad_left(s, target_length, padding) {
     val fill_length = target_length - length(s)
     return padding
@@ -56,6 +74,11 @@ pub proc pad_left(s, target_length, padding) {
         |> concat(s)
 }
 
+/// Returns a new string with a minimum length of `target_length`, padded
+/// by repeating `padding` as many times as needed and inserting it before the
+/// start of `s`.
+/// This means that if `padding` is more than one code point long, the returned
+/// string may be longer than `target_length`.
 pub proc pad_right(s, target_length, padding) {
     val fill_length = target_length - length(s)
     return s
@@ -63,6 +86,12 @@ pub proc pad_right(s, target_length, padding) {
         |> concat(padding |> substring_until(fill_length % length(padding)))
 }
 
+/// Returns a copy of `s`, replacing underscores in `s` with the corresponding
+/// elements in `v`.
+/// If the number of underscores in `s` is less than the number of elements in
+/// `v`, a panic will be triggered.
+/// Underscores for which there is no corresponding element in `v` will simply
+/// be left untouched.
 pub proc fmt(s, v) {
     mut ci = 0
     mut vi = 0
@@ -94,6 +123,8 @@ pub proc fmt(s, v) {
     return rs
 }
 
+/// Splits `s` into parts separated by occurances of `sep`, returning an
+/// iterator over each part. 
 pub proc split(s, sep) {
     mut anchor = 0
     mut done = false
@@ -122,6 +153,8 @@ pub proc split(s, sep) {
     }
 }
 
+/// Joins the strings provided by the iterator `strings` into a single string,
+/// inserting `sep` inbetween joined strings.
 pub proc join(strings, sep) {
     mut value = ""
     mut had_part = false
@@ -134,6 +167,7 @@ pub proc join(strings, sep) {
     return value
 }
 
+/// Returns an iterator over all code points in `s`.
 pub proc iter(s) = 0..length(s)
     |> map(|i| s |> at(i))
 
@@ -158,6 +192,7 @@ proc parse_digits(s) {
         |> unwrap_or(#none unit)
 }
 
+/// Attempts to parse `source` as an integer.
 pub proc parse_int(source) {
     case length(source) == 0 -> return #none unit
     mut start = 0
@@ -220,6 +255,7 @@ proc parse_fractional(source) {
         |> unwrap_or(#none unit)
 }
 
+/// Attempts to parse `source` as a float.
 pub proc parse_flt(source) {
     case length(source) == 0 -> return #none unit
     // (optional) '+' or '-'

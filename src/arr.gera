@@ -1,4 +1,4 @@
-
+/// This module contains utilities for working with arrays. 
 mod std::arr
 
 use std::str::fmt
@@ -6,6 +6,9 @@ use std::sort::quicksort
 use std::coll::Vector
 use std::iter::*
 
+/// Returns a part of the array `a`, starting at the index `start
+/// and including all elements up to the index (not including) `end`.
+/// If `start` or `end` are negative, the length of `a` is added to them.
 pub proc subarray(a, start, end) {
     mut start_index = start
     case start < 0 -> start_index = length(a) + start
@@ -30,12 +33,20 @@ the end index _ (length of array is _)"
     return dest
 }
 
+/// Returns a part of the array `a`, including all elements up to the index
+/// (not including) `end_index`.
+/// If `end_index` is negative, the length of `a` is added to it.
 pub proc subarray_until(a, end_index) = a
     |> subarray(0, end_index)
 
+/// Returns a part of the array `a`, including all elements at and after the
+/// index `start_index`.
+/// If `start_index` is negative, the length of `a` is added to it.
 pub proc subarray_after(a, start_index) = a
     |> subarray(start_index, a |> length())
 
+/// Creates a new array by appending all elements of the array `b`
+/// to the end of the array `a`. 
 pub proc concat(a, b) {
     case length(a) == 0 -> return b
     case length(b) == 0 -> return a
@@ -49,9 +60,11 @@ pub proc concat(a, b) {
     return r
 }
 
+/// Creates a shallow copy of the array `a`. 
 pub proc clone(a) = a
     |> subarray(0, a |> length())
 
+/// Creates a new array by reversing the order of the elements in `a`. 
 pub proc reversed(a) {
     val ac = a |> clone()
     0..(length(ac) / 2) |> for_each(|o| {
@@ -64,9 +77,13 @@ pub proc reversed(a) {
     return ac
 }
 
+/// Creates a new iterator over the elements in `a`. 
 pub proc iter(a) = 0..length(a)
     |> map(|i| a[i])
 
+/// Collects all the elements from the iterator `i` into a new array.
+/// Make sure the passed iterator is finite if you want this procedure
+/// to return before the heat death of the universe.
 pub proc collect(i) {
     val dest = Vector::new()
     i |> for_each(|e| dest .> push(e))
@@ -74,6 +91,13 @@ pub proc collect(i) {
         |> subarray_until(dest.size)
 }
 
+/// Uses `std::sort::quicksort` to return a new sorted shallow copy of `a`
+/// sorted according to the comparison function `comp`
+/// (see `std::sort::ascending` and `std::sort::descending`).
+/// `comp` must be a function that takes two array elements `a` and `b`
+/// to compare, returning eiter a
+/// number that is less than zero (placing `a` at an index lower than `b`) or a
+/// number that is greater than zero (placing `a` at an index higher than `b`).
 pub proc sorted(a, comp) {
     val ac = a |> clone()
     quicksort(ac, 0, length(ac), comp)

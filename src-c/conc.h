@@ -2,10 +2,7 @@
 #ifndef GERASTD_CONC_H
 #define GERASTD_CONC_H
 
-
 #include <gera.h>
-
-typedef GERA_CLOSURE_NOARGS(void) ThreadTask;
 
 #ifdef _WIN32
     #include <windows.h>

@@ -1,8 +1,9 @@
-
+/// This module contains procedures for working with result values.
 mod std::res
 
 use std::iter
 
+/// Returns `true` if `result` contains a value.
 pub proc is_ok(result) {
     case result {
         #ok -> return true
@@ -10,6 +11,7 @@ pub proc is_ok(result) {
     }
 }
 
+/// Returns `true` if `result` contains an error.
 pub proc is_err(result) {
     case result {
         #err -> return true
@@ -17,6 +19,7 @@ pub proc is_err(result) {
     }
 }
 
+/// Returns the value contained by `result`.
 pub proc get_ok(result) {
     case result {
         #ok o -> return #some o
@@ -24,6 +27,7 @@ pub proc get_ok(result) {
     }
 }
 
+/// Returns the error contained by `result`.
 pub proc get_err(result) {
     case result {
         #err e -> return #some e
@@ -31,6 +35,8 @@ pub proc get_err(result) {
     }
 }
 
+/// Returns a new result value by passing the value possibly contained by
+/// `result` to `mapping`.
 pub proc map(result, mapping) {
     case result {
         #ok o -> return #ok mapping(o)
@@ -38,6 +44,8 @@ pub proc map(result, mapping) {
     }
 }
 
+/// Returns a new result value by passing the error possibly contained by
+/// `result` to `mapping`.
 pub proc map_err(result, mapping) {
     case result {
         #err e -> return #err mapping(e)
@@ -45,6 +53,8 @@ pub proc map_err(result, mapping) {
     }
 }
 
+/// Returns either the value contained by `result`
+/// or `default` if it contains an error.
 pub proc unwrap_or(result, default) {
     case result {
         #ok o -> return o
@@ -52,6 +62,8 @@ pub proc unwrap_or(result, default) {
     }
 }
 
+/// Returns either the error contained by `result`
+/// or `default` if it contains a value.
 pub proc unwrap_err_or(result, default) {
     case result {
         #err e -> return e
@@ -59,6 +71,8 @@ pub proc unwrap_err_or(result, default) {
     }
 }
 
+/// Returns either the value contained by `result`
+/// or the result of calling `f` with the contained error.
 pub proc unwrap_or_else(result, f) {
     case result {
         #ok o -> return o
@@ -66,6 +80,8 @@ pub proc unwrap_or_else(result, f) {
     }
 }
 
+/// Returns either the error contained by `result`
+/// or the result of calling `f` with the contained value.
 pub proc unwrap_err_or_else(result, f) {
     case result {
         #ok o -> return f(o)
@@ -73,12 +89,25 @@ pub proc unwrap_err_or_else(result, f) {
     }
 }
 
+/// Returns the value contained by `result`.
+/// This procedure shall be used if there is good reason to assume that
+/// `result` will *always* contain a value, and the reasoning for this
+/// shall be passed for `reason`.
+/// If `result` does not contain a value, the a panic with the
+/// given message `reason` will be triggered.
 pub proc expect(result, reason) = result
     |> unwrap_or_else(|e| panic(reason))
 
+/// Returns the error contained by `result`.
+/// This procedure shall be used if there is good reason to assume that
+/// `result` will *always* contain an error, and the reasoning for this
+/// shall be passed for `reason`.
+/// If `result` does not contain an error, the a panic with the
+/// given message `reason` will be triggered.
 pub proc expect_err(result, reason) = result
     |> unwrap_err_or_else(|o| panic(reason))
 
+/// Returns `other` if `result` contains a value and otherwise returns `result`.
 pub proc and(result, other) {
     case result {
         #ok -> return other
@@ -86,6 +115,10 @@ pub proc and(result, other) {
     }
 }
 
+/// Returns the result of calling `f` with the value contained by `result` or
+/// simply returns `result` if it contain an error.
+/// This differs from `std::res::map` in that for this procedure, `f` needs
+/// to return a result instead of the new contained value.
 pub proc and_then(result, f) {
     case result {
         #ok o -> return f(o)
@@ -93,6 +126,7 @@ pub proc and_then(result, f) {
     }
 }
 
+/// Returns `result` if `result` contains a value and otherwise returns `other`.
 pub proc or(result, other) {
     case result {
         #err -> return other
@@ -100,6 +134,10 @@ pub proc or(result, other) {
     }
 }
 
+/// Returns the result of calling `f` with the error contained by `result` or
+/// simply returns `result` if it contain a value.
+/// This differs from `std::res::map_err` in that for this procedure, `f` needs
+/// to return a result instead of the new contained error.
 pub proc or_else(result, f) {
     case result {
         #err e -> return f(e) 
@@ -107,10 +145,14 @@ pub proc or_else(result, f) {
     }
 }
 
+/// Returns an iterator that returns the value contained by `result` once.
+/// If `result` contains an error, an empty iterator is returned.
 pub proc iter(result) = result
-    |> map(-> iter::over_value(it))
+    |> map(-> iter::iter_value(it))
     |> unwrap_or(iter::empty())
 
+/// Returns an iterator that returns the error contained by `result` once.
+/// If `result` contains a value, an empty iterator is returned.
 pub proc iter_err(result) = result
-    |> map_err(-> iter::over_value(it))
+    |> map_err(-> iter::iter_value(it))
     |> unwrap_err_or(iter::empty())

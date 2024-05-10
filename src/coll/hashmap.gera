@@ -1,4 +1,4 @@
-
+/// Provides a simple hash map implementation.
 mod std::coll::HashMap
 
 use std::math::abs
@@ -21,6 +21,7 @@ proc iter_nodes(start_node) {
 
 val INITIAL_SIZE = 16
 
+/// Creates and returns a new hash map with an intitial capacity of 16.
 pub proc new() = with_capacity(INITIAL_SIZE)
 
 proc with_capacity(initial_capacity) = {
@@ -129,6 +130,8 @@ proc with_capacity(initial_capacity) = {
 
 }
 
+/// Creates and returns a new hash map and collects all `key` - `value`
+/// pair objects from the given iterator `from_iter` into it.
 pub proc collect(from_iter) {
     val dest = new()
     from_iter |> for_each(|v| dest .> set(v.key, v.value))

@@ -1,10 +1,11 @@
-
+/// Provides a mutex implementation. Can also be used as a static value.
 mod std::conc::Mutex
 
 use std::internal::conc::Mutex::*
 use std::opt
 
 target c {
+    /// Creates and returns a new mutex.
     pub proc new() = {
         handle = #none unit,
 

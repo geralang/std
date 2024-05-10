@@ -1,4 +1,4 @@
-
+/// The base module of the standard library.
 mod std
 
 pub proc poem() {
@@ -24,11 +24,14 @@ From null you're protected
 and from going crazy"
 }
 
+/// Returns `if_true` if `cond` is `true` and otherwise returns `if_false`.
 pub proc if_else(cond, if_true, if_false) {
     case cond -> return if_true
     else return if_false
 }
 
+/// Returns the result of calling `if_true` if `cond` is `true`
+/// and otherwise returns the result of calling `if_false`.
 pub proc if_else_lazy(cond, if_true, if_false) {
     case cond -> return if_true()
     else return if_false()

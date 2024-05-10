@@ -1,4 +1,4 @@
-
+/// Provides an implementation of a simple random number generator.
 mod std::rng::Random
 
 use std::time
@@ -10,6 +10,8 @@ use std::math::*
 val LCG_MULTIPLIER = 6364136223846793005
 val LCG_INCREMENT = 1442695040888963407
 
+/// Creates a new semi-random deterministic number generator,
+/// intialized with the integer `seed`. 
 pub proc new(seed) { return {
     state = seed,
 
@@ -72,31 +74,44 @@ proc init_global_gen() {
     }
 }
 
+/// Generates and returns a random integer,
+/// advancing the state of the global generator. 
 pub proc int() {
     init_global_gen()
     return GLOBAL_GEN .> int()
 }
 
+/// Generates and returns a random float,
+/// advancing the state of the global generator. 
 pub proc flt() {
     init_global_gen()
     return GLOBAL_GEN .> flt()
 }
 
+/// Generates and returns a random integer (at least `min` and at most `max`),
+/// advancing the state of the global generator. 
 pub proc int_in(min, max) {
     init_global_gen()
     return GLOBAL_GEN .> int_in(min, max)
 }
 
+/// Generates and returns a random float (at least `min` and at most `max`),
+/// advancing the state of the global generator. 
 pub proc flt_in(min, max) {
     init_global_gen()
     return GLOBAL_GEN .> flt_in(min, max)
 }
 
+/// Picks and returns a random item from the array `src`,
+/// advancing the state of the global generator. 
 pub proc choice(array) {
     init_global_gen()
     return GLOBAL_GEN .> choice(array)
 }
 
+/// Returns a new infinite iterator where for each item in the iterator
+/// it picks a random item from the array `src`,
+/// advancing the state of the global generator every time. 
 pub proc sample(array) {
     init_global_gen()
     return GLOBAL_GEN .> sample(array)

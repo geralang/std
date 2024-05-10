@@ -1,32 +1,48 @@
-
+/// This module contains constants and procedures for
+/// general math-related operations.
 mod std::math
 
+/// The minimum value that can be held by an integer.
+/// Equal to `-9223372036854775808`.
 pub val INT_MIN = -INT_MAX - 1
+/// The maximum value that can be held by an integer.
+/// Equal to `9223372036854775807`.
 pub val INT_MAX = 9223372036854775807
 
+/// The float infinity value. The result of `1.0 / 0.0`.
 pub val INF = 1.0 / 0.0
+/// The float "not a number" value. The result of `0.0 / 0.0`. 
 pub val NAN = 0.0 / 0.0
 
+/// Equal to `3.14159265358979323846264338327950288`.
 pub val PI = 3.14159265358979323846264338327950288
+/// Equal to `6.28318530717958647692528676655900577`.
 pub val TAU = 6.28318530717958647692528676655900577
+/// Equal to `2.718281828459045`.
 pub val E = 2.718281828459045
 
+/// Returns the absolute value of the float or integer `x`. 
 pub proc abs(x) {
     val zero = x - x
     case x < zero -> return -x
     return x
 }
 
+/// Returns the larger integer or float of `a` and `b`. 
 pub proc max(a, b) {
     case a >= b -> return a
     return b
 }
 
+/// Returns the smaller integer or float of `a` and `b`. 
 pub proc min(a, b) {
     case a <= b -> return a
     return b
 }
 
+/// Returns the integer or float `x`.
+/// If `x` is less than `min`, `min` is returned instead.
+/// If `x` is greater than `max`, `max` is returned instead.
 pub proc clamp(x, min, max) {
     case x < min -> return min
     case x > max -> return max
