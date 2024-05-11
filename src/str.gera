@@ -311,10 +311,13 @@ pub proc parse_flt(source) {
     return #some sign * fractional * exponent_val
 } 
 
+/// Returns `repeated` repeated `times` times.
 pub proc repeat(repeated, times) = repeat_over(|| repeated)
     |> take(times)
     |> join("")
 
+/// Returns `src`, replacing all occurances of `replaced` in `src`
+/// with `replacement`.
 pub proc replace(src, replaced, replacement) = src
     |> split(replaced)
     |> join(replacement)
