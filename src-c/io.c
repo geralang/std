@@ -14,6 +14,7 @@ void gera_std_io_println(GeraString line) {
     buffer[line.length_bytes] = '\n';
     fwrite(buffer, sizeof(char), line.length_bytes + 1, stdout);
     fflush(stdout);
+    gera___ref_deleted(line.allocation);
 }
 
 void gera_std_io_eprintln(GeraString line) {
@@ -22,16 +23,19 @@ void gera_std_io_eprintln(GeraString line) {
     buffer[line.length_bytes] = '\n';
     fwrite(buffer, sizeof(char), line.length_bytes + 1, stderr);
     fflush(stderr);
+    gera___ref_deleted(line.allocation);
 }
 
 void gera_std_io_print(GeraString thing) {
     fwrite(thing.data, sizeof(char), thing.length_bytes, stdout);
     fflush(stdout);
+    gera___ref_deleted(thing.allocation);
 }
 
 void gera_std_io_eprint(GeraString thing) {
     fwrite(thing.data, sizeof(char), thing.length_bytes, stderr);
     fflush(stderr);
+    gera___ref_deleted(thing.allocation);
 }
 
 GeraString gera_std_io_inputln() {
