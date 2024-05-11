@@ -1,0 +1,17 @@
+{
+    "name": "std",
+    "description": "The standard library.",
+    "authors": ["TypeSafeSchwalbe"],
+    "target": "any",
+    "dependencies": [],
+    "link": {
+        "c": [
+            "bitwise.o", "env.o", "io.o", "prc.o", "math.o", "time.o", "conc.o",
+            "storage.o"
+        ],
+        "js": [
+            "src-js/io.js", "src-js/math.js", "src-js/bitwise.js", 
+            "src-js/time.js"
+        ]
+    }
+}
