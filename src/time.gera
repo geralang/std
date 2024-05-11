@@ -43,15 +43,16 @@ pub proc now_utc() = internal_utc_unix_millis() + unix_epoch()
 pub proc now_local() = internal_local_unix_millis() + unix_epoch()
 
 /// Computes the time passed since the 1st of January, 1 AD at 00:00
-/// after `day` days, `month` months and `year` years in milliseconds.
+/// on the `day`th day of the `month`th month
+/// of the year `year` AD (all 1-indexed) at 00:00.
 pub proc date(day, month, year) = 0
     |> add_years(year - 1)
     |> add_months(month - 1)
     |> add_days(day - 1)
 
 /// Computes the time passed since the 1st of January, 1 AD at 00:00
-/// after `day` days, `month` months, `year` years,
-/// `hour` hours, `minute` minutes and `second` seconds in milliseconds.
+/// on the `day`th day of the `month`th month
+/// of the year `year` AD (all 1-indexed) at `hour`:`minute`:`second`.
 pub proc date_time(day, month, year, hour, minute, second)
     = date(day, month, year)
         |> add_seconds(second)
