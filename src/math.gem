@@ -20,7 +20,7 @@ proc std::math::cbrt(float) -> float = gera_std_math_cbrt
 /// Returns the square root of the sum of the squares of the given floats.
 proc std::math::hypot(float, float) -> float = gera_std_math_hypot
 
-/// Returns the sin of the given float in radians.
+/// Returns the sine of the given float in radians.
 proc std::math::sin(float) -> float = gera_std_math_sin
 /// Returns the cosine of the given float in radians.
 proc std::math::cos(float) -> float = gera_std_math_cos
@@ -33,7 +33,7 @@ proc std::math::acos(float) -> float = gera_std_math_acos
 /// Returns the inverse tangent of the given float in radians.
 proc std::math::atan(float) -> float = gera_std_math_atan
 /// Returns the angle in the plane in radians between the positive x-axis and
-// the ray from (0, 0) to the point specified by the two given floats.
+/// the ray from (0, 0) to the point specified by the two given floats.
 proc std::math::atan2(float, float) -> float = gera_std_math_atan2
 
 /// Returns the hyperbolic sine of the given float.
