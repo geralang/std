@@ -2,6 +2,7 @@
 /// Just like `core::substring`, all indices are in unicode code points.
 mod std::str
 
+use std::internal::str::*
 use std::iter::*
 use std::opt::*
 use std::math::*
@@ -321,3 +322,14 @@ pub proc repeat(repeated, times) = repeat_over(|| repeated)
 pub proc replace(src, replaced, replacement) = src
     |> split(replaced)
     |> join(replacement)
+
+/// Returns a non-negative integer that is the unicode code point
+/// at the given index. If `index` is negative, the length of `s` will be added
+/// to it.
+pub proc codepoint_at(s, index) = s
+    |> at(index)
+    |> internal_as_codepoint()
+
+/// Returns a string constructed from the given sequence of code points.
+pub proc from_codepoints(cps) = cps
+    |> internal_from_codepoints()

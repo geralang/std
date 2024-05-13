@@ -1,0 +1,3 @@
+
+proc std::internal::str::internal_from_codepoints([int]) -> str = gera_std_str_from_codepoints
+proc std::internal::str::internal_as_codepoint(str) -> int = gera_std_str_as_codepoint
