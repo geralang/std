@@ -2,23 +2,33 @@
 /// and procedures for clearly defining the sorting order. 
 mod std::sort
 
+use std::math::min
+use std::rng::Random
+use std::str::(at, codepoint_at)
 use std::iter::*
 use std::opt::*
-use std::rng::Random
 
 /// Returns a comparison function that makes it so values for which `f`
 /// returns a lower number will be placed at an index lower than that of
 /// a value for which `f` returns a higher number (ascending order).
-pub proc ascending(f) {
-    return |a, b| f(a) - f(b)
-}
+pub proc ascending(f) = |a, b| f(a) - f(b)
 
 /// Returns a comparison function that makes it so values for which `f`
 /// returns a lower number will be placed at an index higher than that of
 /// a value for which `f` returns a higher number (descending order).
-pub proc descending(f) {
-    return |a, b| f(b) - f(a)
-}  
+pub proc descending(f) = |a, b| f(b) - f(a)
+
+/// Returns a comparison function that makes it so values are sorted in
+/// alphabetical order based on the string that `f` returns for that value.
+pub proc alphabetical(f) = |a, b| {
+    val a = f(a)
+    val b = f(b)
+    return 0..min(length(a), length(b))
+        |> filter(|i| at(a, i) != at(b, i))
+        |> next()
+        |> map(|i| codepoint_at(a, i) - codepoint_at(b, i))
+        |> unwrap_or_else(|| length(a) - length(b))
+}
 
 /// Sorts the part of the array `src` starting at the index `start`
 /// up to (not including) the index `end` in place, modifying `src`.
@@ -41,7 +51,8 @@ pub proc quicksort(src, start, end, comp) {
         current.left = current.left..=current.right
             |> find(|l| comp(src[l], pivot) >= zero)
             |> expect("'l' is guaranteed to meet the pivot")
-        current.right = current.right..=current.left
+        current.right = 0..=(current.right - current.left)
+            |> map(-> current.right - it)
             |> find(|r| comp(src[r], pivot) <= zero)
             |> expect("'r' is guaranteed to meet the pivot")
         case src[current.left] == pivot && src[current.right] == pivot
