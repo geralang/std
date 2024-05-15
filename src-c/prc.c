@@ -377,10 +377,14 @@ gint process_handle_get(GeraAllocation* captures) {
             }
             mutex_unlock(&process_entry->mutex);
             gera___ref_deleted(process_handle.allocation);
-            return (ProcessStatus) {
+            GeraAllocation* ra = gera___alloc(
+                sizeof(ProcessStatusLayout), NULL
+            );
+            *((ProcessStatusLayout*) ra->data) = (ProcessStatusLayout) {
                 .is_finished = 0,
                 .exit_code = -1
             };
+            return (GeraObject) { .allocation = ra };
         }
         mutex_unlock(&process_entry->mutex);
         gera___ref_deleted(process_handle.allocation);

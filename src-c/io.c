@@ -228,9 +228,7 @@ static void free_string_array(GeraAllocation* allocation) {
             GET_CURRENT_ERROR(error_reason);
             return create_io_result_err(error_reason);
         }
-        GeraAllocation* alloc = gera___alloc(
-            path_length, &gera___free_nothing
-        );
+        GeraAllocation* alloc = gera___alloc(path_length, NULL);
         if(GetFullPathNameA(path_nt, path_length, alloc->data, NULL) == 0) {
             GET_CURRENT_ERROR(error_reason);
             return create_io_result_err(error_reason);
