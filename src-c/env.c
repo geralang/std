@@ -81,9 +81,9 @@ GeraArray gera_std_env_args() {
         GERA_STRING_NULL_TERM(command, command_nt);
         gera___ref_deleted(command.allocation);
         STARTUPINFO sinfo;
-        PROCESS_INFORMATION pinfo;
-        ZeroMemory(&pinfo, sizeof(pinfo));
+        ZeroMemory(&sinfo, sizeof(sinfo));
         sinfo.cb = sizeof(sinfo);
+        PROCESS_INFORMATION pinfo;
         ZeroMemory(&pinfo, sizeof(pinfo));
         if(!CreateProcess(NULL, command_nt, NULL, NULL, FALSE, 0, NULL, NULL, &sinfo, &pinfo)) {
             gera___panic("Unable to execute system command!");
