@@ -43,6 +43,7 @@ gint process_handle_get(GeraAllocation* captures) {
 
     typedef struct ProcessEntry {
         PROCESS_INFORMATION pi;
+        char* cmd;
         gbool is_finished;
         gint exit_code;
         GeraAllocation* handle_allocation;
@@ -65,6 +66,23 @@ gint process_handle_get(GeraAllocation* captures) {
         CloseHandle(process_entry->stdin_pipe.read);
         CloseHandle(process_entry->stdin_pipe.write);
         storage_remove(&PROCESS_STORAGE, id);
+        free(process_entry->cmd);
+    }
+
+    static void escape_process_arg(char** cmd, GeraString arg) {
+        **cmd = '"';
+        *cmd += 1;
+        for(size_t i = 0; i < arg.length_bytes; i += 1) {
+            char c = arg.data[i];
+            if(c == '\\' || c == '"') {
+                **cmd = '\\';
+                *cmd += 1;
+            }
+            **cmd = c;
+            *cmd += 1;
+        }
+        **cmd = '"';
+        *cmd += 1;
     }
 
     GeraClosure gera_std_prc_run(GeraString program, GeraArray args) {
@@ -80,20 +98,20 @@ gint process_handle_get(GeraAllocation* captures) {
         ZeroMemory(&process_entry->pi, sizeof(process_entry->pi));
         gera___begin_read(args.allocation);
         GeraString* args_str = (GeraString*) args.allocation->data;
-        size_t command_length = program.length_bytes;
-        for(size_t arg_idx = 0; arg_idx < args.length; arg_idx += 1) {
-            command_length += 1 + args_str[arg_idx].length_bytes;
+        size_t cmd_length = program.length_bytes * 2 + 2;
+        for(size_t argi = 0; argi < args.length; argi += 1) {
+            cmd_length += 1;
+            cmd_length += args_str[argi].length_bytes * 2 + 2;
         }
-        char command[command_length + 1];
-        memcpy(command, program.data, program.length_bytes);
-        size_t arg_offset = program.length_bytes;
-        for(size_t arg_idx = 0; arg_idx < args.length; arg_idx += 1) {
-            command[arg_offset] = ' ';
-            arg_offset += 1;
-            GeraString arg = args_str[arg_idx];
-            memcpy(command + arg_offset, arg.data, arg.length_bytes);
-            arg_offset += arg.length_bytes;
+        process_entry->cmd = (char*) malloc(sizeof(char) * cmd_length);
+        char* cmd = process_entry->cmd;
+        escape_process_arg(&cmd, program);
+        for(size_t argi = 0; argi < args.length; argi += 1) {
+            *cmd = ' ';
+            cmd += 1;
+            escape_process_arg(&cmd, args_str[argi]);
         }
+        *cmd = '\0';
         gera___end_read(args.allocation);
         STARTUPINFO si;
         ZeroMemory(&si, sizeof(si));
@@ -102,10 +120,9 @@ gint process_handle_get(GeraAllocation* captures) {
         si.hStdError = process_entry->stderr_pipe.write;
         si.hStdInput = process_entry->stdin_pipe.read;
         si.dwFlags |= STARTF_USESTDHANDLES;
-        command[command_length] = '\0';
         if (!CreateProcessA(
             NULL,        // Application name
-            command,
+            process_entry->cmd,
             NULL,        // Process handle not inheritable
             NULL,        // Thread handle not inheritable
             TRUE,        // Inherit handles we just configured
