@@ -469,7 +469,9 @@ GeraObject gera_std_io_read_file(GeraString path) {
     size_t length_bytes = ftell(src);
     fseek(src, 0, SEEK_SET);
     GeraAllocation* alloc = gera___alloc(length_bytes, NULL);
-    fread(alloc->data, 1, length_bytes, src);
+    if(fread(alloc->data, sizeof(char), length_bytes, src) != length_bytes) {
+        return create_io_result_err(strerror(errno));
+    }
     fclose(src);
     size_t length = 0;
     for(size_t i = 0; i < length_bytes; length += 1) {
