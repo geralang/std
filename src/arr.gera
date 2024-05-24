@@ -4,6 +4,7 @@ mod std::arr
 use std::str::fmt
 use std::sort::quicksort
 use std::coll::Vector
+use std::opt::expect
 use std::iter::*
 
 /// Returns a part of the array `a`, starting at the index `start
@@ -89,6 +90,23 @@ pub proc collect(i) {
     i |> for_each(|e| dest .> push(e))
     return dest.content
         |> subarray_until(dest.size)
+}
+
+/// Collects the first `n` elements from the iterator `i` into a new array.
+/// Panics if the given iterator `i` has less than `n` elements.
+/// More efficient than `std::arr::collect`.
+pub proc collect_sized(i, n) {
+    case n == 0 -> return []
+    val first = i
+        |> next() 
+        |> expect("Given iterator ended prematurely!")
+    val r = [first; n]
+    1..n |> for_each(|idx| {
+        r[idx] = i 
+            |> next() 
+            |> expect("Given iterator ended prematurely!")
+    })
+    return r
 }
 
 /// Uses `std::sort::quicksort` to return a new sorted shallow copy of `a`
